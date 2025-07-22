@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { withAuth } from '@/components/auth';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -16,9 +17,33 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Card, Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { BusinessService } from '@/services/BusinessService';
+import { Business } from '@/models/Business';
 
 function ProfilePage() {
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
+  const [userBusinesses, setUserBusinesses] = useState<Business[]>([]);
+  const [loadingBusinesses, setLoadingBusinesses] = useState(false);
+
+  useEffect(() => {
+    const loadUserBusinesses = async () => {
+      if (!firebaseUser) return;
+      
+      setLoadingBusinesses(true);
+      try {
+        const businessService = new BusinessService();
+        // Use firebaseUser.uid to match what add-business uses for ownerId
+        const businesses = await businessService.getBusinessesByOwner(firebaseUser.uid);
+        setUserBusinesses(businesses);
+      } catch (error) {
+        console.error('Error loading user businesses:', error);
+      } finally {
+        setLoadingBusinesses(false);
+      }
+    };
+
+    loadUserBusinesses();
+  }, [firebaseUser]);
 
   if (!user) {
     return (
@@ -168,6 +193,121 @@ function ProfilePage() {
                 </div>
               </div>
             </Card>
+
+            {/* My Businesses */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  העסקים שלי
+                </h2>
+                <Link href="/add-business">
+                  <Button variant="outline" size="sm">
+                    <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 ml-2" />
+                    הוסף עסק
+                  </Button>
+                </Link>
+              </div>
+
+              {loadingBusinesses ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
+                  <p className="text-gray-600">טוען עסקים...</p>
+                </div>
+              ) : userBusinesses.length > 0 ? (
+                <div className="space-y-4">
+                  {userBusinesses.map((business) => (
+                    <div 
+                      key={business.id} 
+                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Business Logo */}
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-teal-100 flex items-center justify-center flex-shrink-0">
+                          {business.metadata?.images?.logoUrl ? (
+                            <Image
+                              src={business.metadata.images.logoUrl}
+                              alt={`לוגו ${business.name}`}
+                              width={48}
+                              height={48}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
+                          )}
+                        </div>
+                        
+                        {/* Business Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold text-gray-900 mb-1">
+                                {business.name}
+                              </h3>
+                              <p className="text-sm text-teal-600 mb-2">
+                                {business.metadata?.category || 'עסק'}
+                              </p>
+                              <p className="text-sm text-gray-600 line-clamp-2">
+                                {business.description}
+                              </p>
+                            </div>
+                            
+                            {/* Action Buttons */}
+                            <div className="flex gap-2 ml-4">
+                              <Link href={`/businesses/${business.id}`}>
+                                <Button variant="outline" size="sm">
+                                  צפייה
+                                </Button>
+                              </Link>
+                              <Button variant="outline" size="sm">
+                                <FontAwesomeIcon icon={faEdit} className="w-4 h-4 ml-1" />
+                                עריכה
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {/* Business Status */}
+                          <div className="mt-3 flex items-center gap-4">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              business.isActive 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {business.isActive ? 'פעיל' : 'לא פעיל'}
+                            </span>
+                            
+                            {business.serviceTags.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-gray-500">שירותים:</span>
+                                <span className="text-xs text-gray-700">
+                                  {business.serviceTags.slice(0, 2).join(', ')}
+                                  {business.serviceTags.length > 2 && ` +${business.serviceTags.length - 2}`}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <FontAwesomeIcon icon={faBuilding} className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    אין לך עסקים רשומים
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    הוסף את העסק הראשון שלך לקהילה
+                  </p>
+                  <Link href="/add-business">
+                    <Button variant="primary">
+                      <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 ml-2" />
+                      הוסף עסק
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </Card>
           </div>
 
           {/* Sidebar */}
@@ -229,7 +369,7 @@ function ProfilePage() {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">עסקים:</span>
                   <span className="text-sm font-medium">
-                    {user.businessId ? '1' : '0'}
+                    {userBusinesses.length}
                   </span>
                 </div>
                 <div className="flex justify-between">

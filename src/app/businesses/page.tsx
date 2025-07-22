@@ -17,13 +17,16 @@ import {
 import { Button, Card } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { BusinessService } from '@/services/BusinessService';
+import { UserService } from '@/services/UserService';
 import { Business } from '@/models/Business';
+import { User } from '@/models/User';
 
 export default function BusinessesPage() {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const isApproved = isAuthenticated && (isAdmin || (user && user.isApproved()));
   
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businessOwners, setBusinessOwners] = useState<Map<string, User>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -34,9 +37,45 @@ export default function BusinessesPage() {
       }
 
       try {
+        console.log('Loading businesses - User status:', { 
+          isAuthenticated, 
+          isApproved, 
+          isAdmin,
+          userId: user?.id,
+          userStatus: user?.status 
+        });
+        
         const businessService = new BusinessService();
-        const allBusinesses = await businessService.getActiveBusinesses();
+        const userService = new UserService();
+        let allBusinesses = [];
+        
+        if (isApproved || isAdmin) {
+          // Approved users get full business list
+          allBusinesses = await businessService.getActiveBusinesses();
+          console.log('Successfully loaded businesses for approved user:', allBusinesses.length);
+        } else {
+          // Unapproved users get limited demo businesses (you could create a separate method for this)
+          console.log('User not approved, showing limited view');
+          allBusinesses = []; // For now, show empty list for unapproved users
+        }
+        
         setBusinesses(allBusinesses);
+        
+        // Fetch owner information for each business
+        const ownersMap = new Map<string, User>();
+        const ownerPromises = allBusinesses.map(async (business) => {
+          try {
+            const owner = await userService.getById(business.ownerId);
+            if (owner) {
+              ownersMap.set(business.ownerId, owner);
+            }
+          } catch (error) {
+            console.error(`Error loading owner for business ${business.name}:`, error);
+          }
+        });
+        
+        await Promise.all(ownerPromises);
+        setBusinessOwners(ownersMap);
       } catch (error) {
         console.error('Error loading businesses:', error);
       } finally {
@@ -236,7 +275,7 @@ export default function BusinessesPage() {
                               </div>
                             )}
                             <p className="text-xs text-gray-400 mt-2">
-                              בעלים: {business.ownerId}
+                              בעלים: {businessOwners.get(business.ownerId)?.name || 'לא זמין'}
                             </p>
                           </div>
                         ) : (

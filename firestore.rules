@@ -115,14 +115,22 @@ service cloud.firestore {
       allow read, update, delete: if isAuthenticated() && 
                                      resource.data.ownerId == request.auth.uid;
       
-      // Approved users can read active businesses
+      // Approved users can read active businesses (individual documents)
       allow read: if isAuthenticated() &&
                      exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved" &&
                      resource.data.isActive == true;
       
+      // Approved users can list active businesses (for queries)
+      allow list: if isAuthenticated() &&
+                     exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved";
+      
+      // Business owners can list their own businesses (for profile page)
+      allow list: if isAuthenticated();
+      
       // Admins can read all businesses
-      allow read: if hasAdminPermission("view_all_businesses");
+      allow read, list: if hasAdminPermission("view_all_businesses");
       
       // Admins can update businesses
       allow update: if hasAdminPermission("edit_business");

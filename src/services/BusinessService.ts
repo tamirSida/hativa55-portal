@@ -17,7 +17,10 @@ export class BusinessService extends BaseService<Business> {
   }
 
   public async getBusinessesByOwner(ownerId: string): Promise<Business[]> {
-    return await this.getByField('ownerId', ownerId, [orderBy('name')]);
+    // Removed orderBy to avoid composite index requirement - will sort client-side
+    const businesses = await this.getByField('ownerId', ownerId);
+    // Sort by name on client side
+    return businesses.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   public async getActiveBusinesses(): Promise<Business[]> {
