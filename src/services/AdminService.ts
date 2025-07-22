@@ -43,11 +43,15 @@ export class AdminService extends BaseService<Admin> {
   }
 
   public async getAllActiveAdmins(): Promise<Admin[]> {
-    return await this.getByField('isActive', true, [orderBy('createdAt', 'desc')]);
+    // Use getAll() and filter in memory to avoid index requirements
+    const allAdmins = await this.getAll();
+    return allAdmins.filter(admin => admin.isActive);
   }
 
   public async getAdminsByRole(role: AdminRole): Promise<Admin[]> {
-    return await this.getByField('role', role, [orderBy('name')]);
+    // Use getAll() and filter in memory to avoid index requirements
+    const allAdmins = await this.getAll();
+    return allAdmins.filter(admin => admin.role === role).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   public async updateAdminPermissions(
