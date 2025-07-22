@@ -1,3 +1,6 @@
+/* Hebrew Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
 :root {
@@ -19,8 +22,46 @@
   }
 }
 
+/* RTL Support */
+html[dir="rtl"] {
+  text-align: right;
+  direction: rtl;
+}
+
+html[dir="rtl"] body {
+  text-align: right;
+}
+
+/* Hebrew Typography */
+html[lang="he"] {
+  font-family: 'Rubik', 'Arial Hebrew', Arial, sans-serif;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Rubik', 'Arial Hebrew', Arial, sans-serif;
+}
+
+/* RTL-specific styles */
+.rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Custom scrollbar for RTL */
+html[dir="rtl"] ::-webkit-scrollbar {
+  width: 12px;
+}
+
+html[dir="rtl"] ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+html[dir="rtl"] ::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+}
+
+html[dir="rtl"] ::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
