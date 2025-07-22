@@ -48,18 +48,18 @@ export default function HomePage() {
       color: 'bg-emerald-500'
     },
     {
-      icon: faUsers,
-      title: 'חנכים ומנטורים',
-      description: 'קבל או תן חונכות מקצועית לחברי הקהילה',
-      href: '/mentors',
+      icon: faGraduationCap,
+      title: 'סביבת סטודנטים',
+      description: 'מתחילים ללמוד? או כבר סטודנטים? התחברו לקהילת הלמידה',
+      href: '/students',
       color: 'bg-indigo-500'
     },
     {
-      icon: faGraduationCap,
-      title: 'רשת בוגרים',
-      description: 'התחבר לבוגרי האוניברסיטה או יחידה שלך',
-      href: '/network',
-      color: 'bg-amber-500'
+      icon: faUsers,
+      title: 'מציאת מנטור',
+      description: 'קבל או תן חונכות מקצועית לחברי הקהילה',
+      href: '/mentors',
+      color: 'bg-purple-500'
     }
   ];
 

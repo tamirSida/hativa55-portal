@@ -10,6 +10,7 @@ import {
   faBriefcase, 
   faUser, 
   faUsers, 
+  faGraduationCap,
   faBars,
   faTimes,
   faSignInAlt,
@@ -63,8 +64,14 @@ export const Navigation: React.FC<NavigationProps> = ({
       requireAuth: false
     },
     {
+      href: '/students',
+      label: 'סביבת סטודנטים',
+      icon: faGraduationCap,
+      requireAuth: false
+    },
+    {
       href: '/mentors',
-      label: 'חנכים',
+      label: 'מציאת מנטור',
       icon: faUsers,
       requireAuth: false
     },
