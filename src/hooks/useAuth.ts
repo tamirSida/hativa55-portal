@@ -32,8 +32,10 @@ interface RegisterData {
   password: string;
   name: string;
   identityId: string;
-  university?: string;
-  field?: string;
+  phone?: string;
+  city?: string;
+  gdud?: string;
+  bio?: string;
 }
 
 export const useAuth = () => {
@@ -52,8 +54,16 @@ export const useAuth = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // First check if user is an admin
-          const isAdmin = await adminService.getAdminByEmail(firebaseUser.email!);
+          // First try to check if user is an admin by checking their UID directly
+          let isAdmin = false;
+          try {
+            const adminDoc = await adminService.getById(firebaseUser.uid);
+            isAdmin = !!adminDoc && adminDoc.isActive;
+          } catch (adminError) {
+            // If admin check fails, assume they're not an admin
+            console.log('Admin check failed (user is likely not an admin):', adminError);
+            isAdmin = false;
+          }
           
           if (isAdmin) {
             // Admin user - don't create/load User document
@@ -66,25 +76,12 @@ export const useAuth = () => {
             });
           } else {
             // Regular user - handle User document
-            let user = await userService.getUserByEmail(firebaseUser.email!);
-            
-            if (!user) {
-              // Only create User document for non-admin users
-              const userId = await userService.createUser({
-                email: firebaseUser.email!,
-                name: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
-                identityId: '', // This should not happen in normal flow
-                phone: '',
-                city: '',
-                gdud: '',
-                bio: '',
-                hobbyTags: [],
-                mentorTags: [],
-                businessId: '',
-                educationIds: []
-              });
-              
-              user = await userService.getById(userId);
+            let user = null;
+            try {
+              user = await userService.getById(firebaseUser.uid);
+            } catch (userError) {
+              // If user document doesn't exist, that's ok - we'll handle it below
+              console.log('User document not found, user may be newly registered');
             }
 
             setAuthState({
@@ -99,10 +96,10 @@ export const useAuth = () => {
           console.error('Auth state change error:', error);
           setAuthState({
             user: null,
-            firebaseUser: null,
+            firebaseUser,
             isAdmin: false,
             loading: false,
-            error: `Failed to load user profile: ${error}`
+            error: null // Don't show error to user for auth state loading
           });
         }
       } else {
@@ -135,42 +132,64 @@ export const useAuth = () => {
     }
   };
 
-  const register = async ({ email, password, name, identityId, university, field }: RegisterData): Promise<void> => {
+  const register = async ({ email, password, name, identityId, phone, city, gdud, bio }: RegisterData): Promise<void> => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
+    let userCredential: any = null;
+    
     try {
-      // Check if identity ID is already taken
+      // STEP 1: Validate all data BEFORE creating Firebase Auth user
       const isIdentityAvailable = await userService.isIdentityIdAvailable(identityId);
       if (!isIdentityAvailable) {
         throw new Error('תעודת הזהות כבר קיימת במערכת');
       }
 
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // STEP 2: Prepare user data
+      const userData = {
+        email,
+        name,
+        identityId,
+        phone: phone || '',
+        city: city || '',
+        gdud: gdud || '',
+        bio: bio || '',
+        hobbyTags: [],
+        mentorTags: [],
+        businessId: '',
+        educationIds: []
+      };
+
+      // STEP 3: Only NOW create Firebase Auth user
+      userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
       await updateProfile(userCredential.user, {
         displayName: name
       });
 
-      const userId = await userService.createUser({
-        email,
-        name,
-        identityId,
-        university,
-        field,
-        contactInfo: {},
-        tags: { canOffer: [], lookingFor: [], interests: [] },
-        businesses: []
-      });
+      // STEP 4: Create Firestore document (if this fails, we'll cleanup the auth user)
+      await userService.createUserWithId(userCredential.user.uid, userData);
 
-      const user = await userService.getById(userId);
+      const user = await userService.getById(userCredential.user.uid);
 
       setAuthState({
         user,
         firebaseUser: userCredential.user,
+        isAdmin: false,
         loading: false,
         error: null
       });
+      
     } catch (error: any) {
+      // CLEANUP: If we created a Firebase Auth user but something failed after,
+      // we need to delete the Firebase Auth user to maintain consistency
+      if (userCredential?.user) {
+        try {
+          await userCredential.user.delete();
+        } catch (cleanupError) {
+          console.error('Failed to cleanup Firebase Auth user:', cleanupError);
+        }
+      }
+      
       const errorMessage = error.message.includes('תעודת הזהות') ? 
         error.message : 
         getAuthErrorMessage(error.code);

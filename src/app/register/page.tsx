@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,7 +18,7 @@ import {
   faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import { Button, Input, Card } from '@/components/ui';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { ISRAELI_CITIES, GDUD_OPTIONS } from '@/utils/israeliData';
 
@@ -50,7 +50,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, error } = useAuthContext();
+  const { register, error, clearError } = useAuth();
   const router = useRouter();
 
   const [formData, setFormData] = useState<RegistrationData>({
@@ -69,6 +69,7 @@ export default function RegisterPage() {
     institutionName: '',
     degreeOrCertificate: ''
   });
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -102,12 +103,14 @@ export default function RegisterPage() {
 
   const nextStep = () => {
     if (validateStep(currentStep) && currentStep < 3) {
+      clearError(); // Clear any existing errors when moving to next step
       setCurrentStep(currentStep + 1);
     }
   };
 
   const prevStep = () => {
     if (currentStep > 1) {
+      clearError(); // Clear any existing errors when moving to previous step
       setCurrentStep(currentStep - 1);
     }
   };
@@ -123,9 +126,13 @@ export default function RegisterPage() {
         email: formData.email,
         password: formData.password,
         identityId: formData.identityId,
-        // We'll handle the additional data after basic registration
+        phone: formData.phone,
+        city: formData.city,
+        gdud: formData.gdud,
+        bio: formData.hasBusiness ? `עסק: ${formData.businessName} - ${formData.businessDescription}` : 
+             formData.hasEducation ? `לימודים: ${formData.degreeOrCertificate} ב${formData.institutionName}` : ''
       });
-      router.push('/'); // Will show pending approval screen
+      router.push('/pending-approval');
     } catch (err) {
       // Error handled by context
     }

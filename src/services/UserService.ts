@@ -16,6 +16,11 @@ export class UserService extends BaseService<User> {
     return await this.create(user.toFirestore() as Omit<User, 'id'>);
   }
 
+  public async createUserWithId(userId: string, userData: Omit<IUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
+    const user = new User({ ...userData, status: UserStatus.PENDING });
+    await this.createWithId(userId, user.toFirestore() as Omit<User, 'id'>);
+  }
+
   public async getUserByIdentityId(identityId: string): Promise<User | null> {
     const users = await this.getByField('identityId', identityId);
     return users.length > 0 ? users[0] : null;

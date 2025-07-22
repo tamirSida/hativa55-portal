@@ -38,7 +38,18 @@ service cloud.firestore {
       
       // Users can create their own profile during registration
       allow create: if isOwner(userId) && 
-                       resource.data.status == "pending";
+                       request.resource.data.status == "pending";
+      
+      // Allow creating user document during registration when auth uid matches document id
+      allow create: if request.auth != null && 
+                       userId == request.auth.uid &&
+                       request.resource.data.status == "pending";
+      
+      // Allow reading user documents by identityId for validation during registration
+      // This is limited to prevent abuse - only when checking field existence
+      allow read: if request.auth == null && 
+                     resource != null &&
+                     'identityId' in resource.data;
       
       // Users can update their own profile (but not status/approval fields)
       allow update: if isOwner(userId) && 

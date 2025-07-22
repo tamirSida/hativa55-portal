@@ -2,6 +2,7 @@ import {
   collection, 
   doc, 
   addDoc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   getDoc, 
@@ -39,6 +40,16 @@ export abstract class BaseService<T> {
       return docRef.id;
     } catch (error) {
       throw new Error(`Failed to create document: ${error}`);
+    }
+  }
+
+  public async createWithId(id: string, data: Omit<T, 'id'>): Promise<void> {
+    try {
+      const processedData = this.prepareDataForFirestore(data);
+      const docRef = this.getDocRef(id);
+      await setDoc(docRef, processedData);
+    } catch (error) {
+      throw new Error(`Failed to create document with ID: ${error}`);
     }
   }
 
