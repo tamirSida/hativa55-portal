@@ -91,7 +91,18 @@ export const Navigation: React.FC<NavigationProps> = ({
     <nav className={`bg-white border-b border-gray-200 shadow-sm ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* Mobile Hamburger Menu - Right Side for RTL */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMobileMenu}
+              icon={isMobileMenuOpen ? faTimes : faBars}
+              aria-label="תפריט"
+            />
+          </div>
+
+          {/* Logo - Center on Mobile, Left on Desktop */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-3">
               <Image 
@@ -163,21 +174,12 @@ export const Navigation: React.FC<NavigationProps> = ({
             )}
           </div>
 
-          {/* Mobile Auth Buttons & Menu */}
+          {/* Mobile Auth Buttons - Left Side */}
           <div className="md:hidden flex items-center gap-2">
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-600 max-w-20 truncate">
-                  {user.name}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleMobileMenu}
-                  icon={isMobileMenuOpen ? faTimes : faBars}
-                  aria-label="תפריט"
-                />
-              </div>
+              <span className="text-xs text-gray-600 max-w-20 truncate">
+                {user.name}
+              </span>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/login">
@@ -198,13 +200,6 @@ export const Navigation: React.FC<NavigationProps> = ({
                     הרשם
                   </Button>
                 </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleMobileMenu}
-                  icon={isMobileMenuOpen ? faTimes : faBars}
-                  aria-label="תפריט"
-                />
               </div>
             )}
           </div>

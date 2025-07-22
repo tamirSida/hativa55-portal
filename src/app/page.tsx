@@ -67,17 +67,17 @@ export default function HomePage() {
     <div className="bg-gray-50">
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-teal-500 to-teal-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 text-white">
               ברוכים הבאים לקהילה
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
               המקום לחבר בין אנשי מקצוע, עסקים, משרות והזדמנויות בקהילה הישראלית
             </p>
             
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto mb-8">
+            <div className="max-w-2xl mx-auto mb-4 sm:mb-8">
               <SearchBar
                 placeholder="חפש עסקים, משרות, חנכים או כישורים..."
                 onSearch={handleSearch}
@@ -85,12 +85,14 @@ export default function HomePage() {
               />
             </div>
 
-            {/* Quick Search */}
-            <QuickSearch
-              suggestions={popularSearches}
-              onSuggestionClick={handleQuickSearch}
-              className="max-w-4xl mx-auto"
-            />
+            {/* Quick Search - Hidden on Mobile */}
+            <div className="hidden sm:block">
+              <QuickSearch
+                suggestions={popularSearches}
+                onSuggestionClick={handleQuickSearch}
+                className="max-w-4xl mx-auto"
+              />
+            </div>
           </div>
         </div>
       </section>
