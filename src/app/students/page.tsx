@@ -6,33 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGraduationCap, faBook, faUsers, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { Card, Button } from '@/components/ui';
 
-const studyGroups = [
-  {
-    id: '1',
-    name: 'קבוצת לימוד פיתוח Web',
-    members: 15,
-    topic: 'React ו-Node.js',
-    nextMeeting: 'ראשון 19:00',
-    description: 'קבוצת לימוד לסטודנטים ומתחילים בפיתוח אפליקציות אינטרנט'
-  },
-  {
-    id: '2',
-    name: 'סטודנטים להנדסת תוכנה',
-    members: 23,
-    topic: 'מבני נתונים ואלגוריתמים',
-    nextMeeting: 'רביעי 18:30',
-    description: 'קבוצת תמיכה לסטודנטים להנדסת תוכנה'
-  },
-  {
-    id: '3',
-    name: 'קבוצת UX/UI למתחילים',
-    members: 12,
-    topic: 'עיצוב ממשקי משתמש',
-    nextMeeting: 'חמישי 20:00',
-    description: 'למי שמתחיל את הדרך בתחום העיצוב הדיגיטלי'
-  }
-];
-
 const resources = [
   {
     title: 'ספרייה דיגיטלית',
@@ -55,6 +28,9 @@ const resources = [
 ];
 
 function StudentsPage() {
+  // TODO: Load real study groups from Firestore
+  const studyGroups: any[] = [];
+  
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -102,47 +78,65 @@ function StudentsPage() {
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {studyGroups.map((group) => (
-              <Card key={group.id} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-indigo-100 p-2 rounded-lg">
-                    <FontAwesomeIcon icon={faGraduationCap} className="w-5 h-5 text-indigo-600" />
+          {studyGroups.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="bg-gray-100 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <FontAwesomeIcon icon={faUsers} className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                אין קבוצות לימוד פעילות עדיין
+              </h3>
+              <p className="text-gray-600 mb-6">
+                היה הראשון ליצור קבוצת לימוד בקהילה
+              </p>
+              <Button variant="primary">
+                <FontAwesomeIcon icon={faUsers} className="w-5 h-5 ml-2" />
+                צור קבוצה ראשונה
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {studyGroups.map((group) => (
+                <Card key={group.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="bg-indigo-100 p-2 rounded-lg">
+                      <FontAwesomeIcon icon={faGraduationCap} className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {group.name}
+                      </h3>
+                      <p className="text-sm text-indigo-600">
+                        {group.members} חברים
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">
-                      {group.name}
-                    </h3>
-                    <p className="text-sm text-indigo-600">
-                      {group.members} חברים
+
+                  <div className="space-y-2 mb-4">
+                    <p className="text-sm font-medium text-gray-700">
+                      נושא: {group.topic}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      מפגש הבא: {group.nextMeeting}
                     </p>
                   </div>
-                </div>
 
-                <div className="space-y-2 mb-4">
-                  <p className="text-sm font-medium text-gray-700">
-                    נושא: {group.topic}
+                  <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                    {group.description}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    מפגש הבא: {group.nextMeeting}
-                  </p>
-                </div>
 
-                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                  {group.description}
-                </p>
-
-                <div className="flex gap-2">
-                  <Button variant="primary" size="sm" className="flex-1">
-                    הצטרף
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    פרטים
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  <div className="flex gap-2">
+                    <Button variant="primary" size="sm" className="flex-1">
+                      הצטרף
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      פרטים
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Stats */}
@@ -152,19 +146,19 @@ function StudentsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
-              <div className="text-3xl font-bold text-indigo-600 mb-2">280+</div>
+              <div className="text-3xl font-bold text-indigo-600 mb-2">-</div>
               <div className="text-gray-600">סטודנטים פעילים</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-indigo-600 mb-2">15+</div>
+              <div className="text-3xl font-bold text-indigo-600 mb-2">{studyGroups.length}</div>
               <div className="text-gray-600">קבוצות לימוד</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-indigo-600 mb-2">50+</div>
+              <div className="text-3xl font-bold text-indigo-600 mb-2">-</div>
               <div className="text-gray-600">פרויקטים משותפים</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-indigo-600 mb-2">8</div>
+              <div className="text-3xl font-bold text-indigo-600 mb-2">-</div>
               <div className="text-gray-600">מוסדות לימוד</div>
             </div>
           </div>

@@ -15,54 +15,13 @@ import {
 import { Button, Card } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 
-// Mock business data for pending/non-logged users
-const sampleBusinesses = [
-  {
-    id: '1',
-    name: 'קפה קהילה',
-    description: 'בית קפה ומקום מפגש חמים במרכז תל אביב',
-    category: 'מסעדנות ואוכל',
-    city: 'תל אביב',
-    owner: 'יואב כהן',
-    isPublic: true
-  },
-  {
-    id: '2', 
-    name: 'אלרון שירותי מחשב',
-    description: 'פתרונות טכנולוגיים לעסקים קטנים וגדולים',
-    category: 'טכנולוגיה ומחשבים',
-    city: 'הרצליה',
-    owner: 'מיכל לוי',
-    isPublic: true
-  },
-  {
-    id: '3',
-    name: 'סטודיו עיצוב נוי',
-    description: 'עיצוב פנים ואדריכלות מקצועיים',
-    category: 'עיצוב ואדריכלות', 
-    city: 'רמת השרון',
-    owner: 'דוד אברהמי',
-    isPublic: true
-  },
-  {
-    id: '4',
-    name: 'משרד עורכי דין בר-אור',
-    description: 'ייעוץ משפטי מקצועי בתחומי עסקים ונדל"ן',
-    category: 'שירותים משפטיים',
-    city: 'תל אביב',
-    owner: 'עו"ד רחל בר-אור',
-    isPublic: false // This will be hidden for non-approved users
-  }
-];
-
 export default function BusinessesPage() {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const isApproved = isAuthenticated && (isAdmin || (user && user.isApproved()));
 
-  // Filter businesses based on approval status
-  const visibleBusinesses = isApproved 
-    ? sampleBusinesses 
-    : sampleBusinesses.filter(business => business.isPublic);
+  // TODO: Load real businesses from Firestore
+  const businesses: any[] = [];
+  const isLoading = false;
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -128,77 +87,69 @@ export default function BusinessesPage() {
         )}
 
         {/* Businesses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {visibleBusinesses.map((business) => (
-            <Card key={business.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start gap-4">
-                <div className="bg-teal-100 p-3 rounded-lg">
-                  <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">
-                    {business.name}
-                  </h3>
-                  <p className="text-sm text-teal-600 mb-2 font-medium">
-                    {business.category}
-                  </p>
-                  <p className="text-gray-600 mb-4 line-clamp-2">
-                    {business.description}
-                  </p>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
-                      {business.city}
-                    </div>
+        {businesses.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="bg-gray-100 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <FontAwesomeIcon icon={faBuilding} className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              אין עסקים זמינים
+            </h3>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {businesses.map((business) => (
+              <Card key={business.id} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-start gap-4">
+                  <div className="bg-teal-100 p-3 rounded-lg">
+                    <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">
+                      {business.name}
+                    </h3>
+                    <p className="text-sm text-teal-600 mb-2 font-medium">
+                      {business.category}
+                    </p>
+                    <p className="text-gray-600 mb-4 line-clamp-2">
+                      {business.description}
+                    </p>
                     
-                    {isApproved ? (
-                      <div className="space-y-1">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <FontAwesomeIcon icon={faPhone} className="w-4 h-4 ml-2" />
-                          050-123-4567
-                        </div>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 ml-2" />
-                          contact@{business.name.replace(/\s+/g, '').toLowerCase()}.co.il
-                        </div>
-                        <p className="text-xs text-gray-400 mt-2">
-                          בעלים: {business.owner}
-                        </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
+                        {business.city}
                       </div>
-                    ) : (
-                      <div className="bg-gray-100 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 text-center">
-                          פרטי קשר זמינים למשתמשים מאושרים בלבד
-                        </p>
-                      </div>
-                    )}
+                      
+                      {isApproved ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <FontAwesomeIcon icon={faPhone} className="w-4 h-4 ml-2" />
+                            {business.phone}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-500">
+                            <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 ml-2" />
+                            {business.email}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-2">
+                            בעלים: {business.ownerName}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-100 p-3 rounded-lg">
+                          <p className="text-xs text-gray-500 text-center">
+                            פרטי קשר זמינים למשתמשים מאושרים בלבד
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* Add Business CTA - Only for approved users */}
-        {isApproved && (
-          <div className="text-center mb-12">
-            <div className="bg-white rounded-2xl shadow-sm p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                יש לך עסק? הוסף אותו לקהילה!
-              </h2>
-              <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                הרחב את הרשת המקצועית שלך והגדל את החשיפה של העסק בקהילה שלנו
-              </p>
-              <Link href="/add-business">
-                <Button variant="primary" size="lg">
-                  <FontAwesomeIcon icon={faBuilding} className="w-5 h-5 ml-2" />
-                  הוסף עסק חדש
-                </Button>
-              </Link>
-            </div>
+              </Card>
+            ))}
           </div>
         )}
+
 
         {/* Stats Section */}
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
@@ -208,19 +159,19 @@ export default function BusinessesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <div className="text-3xl font-bold text-teal-600 mb-2">
-                {isApproved ? "150+" : "50+"}
+                {businesses.length}
               </div>
               <div className="text-gray-600">עסקים רשומים</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-teal-600 mb-2">
-                {isApproved ? "1,200+" : "400+"}
+                -
               </div>
               <div className="text-gray-600">חברי קהילה</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-teal-600 mb-2">
-                {isApproved ? "25+" : "10+"}
+                -
               </div>
               <div className="text-gray-600">תחומי התמחות</div>
             </div>

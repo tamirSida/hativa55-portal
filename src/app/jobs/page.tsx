@@ -6,40 +6,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBriefcase, faMapMarkerAlt, faCalendarAlt, faShekelSign } from '@fortawesome/free-solid-svg-icons';
 import { Card, Button } from '@/components/ui';
 
-const mockJobs = [
-  {
-    id: '1',
-    title: 'מפתח Full Stack',
-    company: 'טכנולוגיות אלפא',
-    location: 'תל אביב',
-    salary: '15,000 - 20,000 ₪',
-    type: 'משרה מלאה',
-    postedAt: 'לפני 2 ימים',
-    description: 'מחפשים מפתח Full Stack מנוסה עם ידע ב-React ו-Node.js'
-  },
-  {
-    id: '2',
-    title: 'מעצב UX/UI',
-    company: 'סטודיו עיצוב',
-    location: 'הרצליה',
-    salary: '12,000 - 16,000 ₪',
-    type: 'משרה מלאה',
-    postedAt: 'לפני 5 ימים',
-    description: 'מחפשים מעצב UX/UI יצירתי עם ניסיון בעיצוב אפליקציות'
-  },
-  {
-    id: '3',
-    title: 'מנהל פרויקטים',
-    company: 'חברת ייעוץ',
-    location: 'רמת גן',
-    salary: '18,000 - 25,000 ₪',
-    type: 'משרה מלאה',
-    postedAt: 'לפני שבוע',
-    description: 'מחפשים מנהל פרויקטים מנוסה לניהול פרויקטים טכנולוגיים'
-  }
-];
-
 function JobsPage() {
+  // TODO: Load real jobs from Firestore
+  const jobs: any[] = [];
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,58 +31,76 @@ function JobsPage() {
         </div>
 
         {/* Jobs Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {mockJobs.map((job) => (
-            <Card key={job.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-100 p-3 rounded-lg">
-                    <FontAwesomeIcon icon={faBriefcase} className="w-6 h-6 text-emerald-600" />
+        {jobs.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="bg-gray-100 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <FontAwesomeIcon icon={faBriefcase} className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              אין משרות פרסומות עדיין
+            </h3>
+            <p className="text-gray-600 mb-6">
+              היה הראשון לפרסם משרה בקהילה
+            </p>
+            <Button variant="primary">
+              <FontAwesomeIcon icon={faBriefcase} className="w-5 h-5 ml-2" />
+              פרסם משרה ראשונה
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {jobs.map((job) => (
+              <Card key={job.id} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-emerald-100 p-3 rounded-lg">
+                      <FontAwesomeIcon icon={faBriefcase} className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                        {job.title}
+                      </h3>
+                      <p className="text-emerald-600 font-medium">
+                        {job.company}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                      {job.title}
-                    </h3>
-                    <p className="text-emerald-600 font-medium">
-                      {job.company}
-                    </p>
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                    {job.type}
+                  </span>
+                </div>
+
+                <p className="text-gray-600 mb-4 leading-relaxed">
+                  {job.description}
+                </p>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
+                    {job.location}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FontAwesomeIcon icon={faShekelSign} className="w-4 h-4 ml-2" />
+                    {job.salary}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4 ml-2" />
+                    {job.postedAt}
                   </div>
                 </div>
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                  {job.type}
-                </span>
-              </div>
 
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                {job.description}
-              </p>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center text-sm text-gray-500">
-                  <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
-                  {job.location}
+                <div className="flex gap-3">
+                  <Button variant="primary" size="sm" className="flex-1">
+                    פרטים נוספים
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    שמור
+                  </Button>
                 </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <FontAwesomeIcon icon={faShekelSign} className="w-4 h-4 ml-2" />
-                  {job.salary}
-                </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <FontAwesomeIcon icon={faCalendarAlt} className="w-4 h-4 ml-2" />
-                  {job.postedAt}
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button variant="primary" size="sm" className="flex-1">
-                  פרטים נוספים
-                </Button>
-                <Button variant="outline" size="sm">
-                  שמור
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Stats */}
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center mt-12">
@@ -122,15 +109,15 @@ function JobsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <div className="text-3xl font-bold text-emerald-600 mb-2">85+</div>
+              <div className="text-3xl font-bold text-emerald-600 mb-2">{jobs.length}</div>
               <div className="text-gray-600">משרות פעילות</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-emerald-600 mb-2">450+</div>
+              <div className="text-3xl font-bold text-emerald-600 mb-2">-</div>
               <div className="text-gray-600">מועמדים רשומים</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-emerald-600 mb-2">120+</div>
+              <div className="text-3xl font-bold text-emerald-600 mb-2">-</div>
               <div className="text-gray-600">השמות מוצלחות</div>
             </div>
           </div>

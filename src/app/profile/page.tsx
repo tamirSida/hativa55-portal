@@ -207,7 +207,7 @@ function ProfilePage() {
                   <FontAwesomeIcon icon={faEdit} className="w-4 h-4 ml-2" />
                   ערוך פרופיל
                 </Button>
-                <Link href="/add-business">
+                <Link href="/add-business" className="block">
                   <Button variant="outline" size="sm" className="w-full justify-start">
                     <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 ml-2" />
                     הוסף עסק

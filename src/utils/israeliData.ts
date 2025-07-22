@@ -48,6 +48,9 @@ export const ISRAELI_CITIES = [
   'תל אביב יפו'
 ];
 
+// Alternative export name for easier importing
+export const israeliCities = ISRAELI_CITIES;
+
 export const SERVICE_AREAS = [
   'כל הארץ',
   'גוש דן',
