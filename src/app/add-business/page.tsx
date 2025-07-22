@@ -30,11 +30,11 @@ interface BusinessFormData {
   phone: string;
   email: string;
   website: string;
-  locationType: 'specific' | 'service-areas'; // New field for location type
-  wazeUrl: string; // For specific location
-  serviceAreas: string[]; // For service areas
-  logoUrl: string; // Business logo
-  imageUrls: string[]; // Business/service images
+  locationType: 'specific' | 'service-areas';
+  wazeUrl: string;
+  serviceAreas: string[];
+  logoUrl: string;
+  imageUrls: string[];
   openHours: {
     [key: string]: { open: string; close: string; closed: boolean };
   };
@@ -64,7 +64,7 @@ const popularServices = [
   'פרטות חנייה',
   'גישה לנכים',
   'אמצעי תשלום אלקטרוני',
-  'שירות 24/7',
+  'שירות 24 שעות',
   'ייעוץ ללא תשלום',
   'אחריות מורחבת',
   'שירות ללקוחות VIP',
@@ -86,6 +86,7 @@ function AddBusinessPage() {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const cloudinaryService = new ClientCloudinaryService();
+  
   const [formData, setFormData] = useState<BusinessFormData>({
     name: '',
     description: '',
@@ -119,7 +120,6 @@ function AddBusinessPage() {
       ...prev,
       [field]: value
     }));
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -171,7 +171,6 @@ function AddBusinessPage() {
     const files = Array.from(event.target.files || []);
     if (files.length === 0 || !user) return;
 
-    // Check total images limit (max 6 business images + 1 logo = 7 total)
     const maxBusinessImages = 6;
     
     if (formData.imageUrls.length + files.length > maxBusinessImages) {
@@ -262,673 +261,704 @@ function AddBusinessPage() {
   const handleSubmit = async () => {
     if (validateStep(currentStep)) {
       try {
-        // TODO: Implement business creation logic
         console.log('Creating business:', formData);
-        // Navigate to success page or business profile
       } catch (error) {
         console.error('Error creating business:', error);
       }
     }
   };
 
+  const getNameClass = () => {
+    return `w-full px-3 py-3 sm:px-4 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base ${errors.name ? 'border-red-500' : 'border-gray-300'}`;
+  };
+
+  const getCategoryClass = () => {
+    return `w-full px-3 py-3 sm:px-4 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base ${errors.category ? 'border-red-500' : 'border-gray-300'}`;
+  };
+
+  const getDescriptionClass = () => {
+    return `w-full px-3 py-3 sm:px-4 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 min-h-[120px] text-base resize-none ${errors.description ? 'border-red-500' : 'border-gray-300'}`;
+  };
+
+  const getPhoneClass = () => {
+    return `w-full px-3 py-3 sm:px-4 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base ${errors.phone ? 'border-red-500' : 'border-gray-300'}`;
+  };
+
+  const getWazeClass = () => {
+    return `w-full px-3 py-3 sm:px-4 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base ${errors.wazeUrl ? 'border-red-500' : 'border-gray-300'}`;
+  };
+
+  const getLocationTypeClass = (type: string) => {
+    const isActive = formData.locationType === type;
+    return `cursor-pointer p-3 sm:p-4 border-2 rounded-lg transition-colors ${isActive ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-gray-300'}`;
+  };
+
+  const getServiceAreaClass = (area: string) => {
+    const isActive = formData.serviceAreas.includes(area);
+    return `bubble filter cursor-pointer text-center text-xs sm:text-sm py-2 px-3 ${isActive ? 'active' : ''}`;
+  };
+
+  const getCityClass = (city: string) => {
+    const isActive = formData.serviceAreas.includes(city);
+    return `bubble filter cursor-pointer text-center text-xs sm:text-sm py-2 px-2 sm:px-3 ${isActive ? 'active' : ''}`;
+  };
+
+  const getServiceClass = (service: string) => {
+    const isActive = formData.serviceTags.includes(service);
+    return `bubble filter cursor-pointer text-center ${isActive ? 'active' : ''}`;
+  };
+
+  const getNavigationButtonClass = () => {
+    const classes = [];
+    if (currentStep > 1) {
+      classes.push('order-1 sm:order-2');
+    } else {
+      classes.push('w-full');
+    }
+    if (currentStep === 1) {
+      classes.push('sm:mr-auto');
+    }
+    return classes.join(' ');
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen">
-      {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="row">
-            <div className="col-xs-12">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <FontAwesomeIcon icon={faBuilding} className="w-8 h-8 text-teal-600" />
-                  <h1 className="text-3xl font-bold text-gray-900">הוספת עסק חדש</h1>
-                </div>
-                
-                {/* Progress Steps */}
-                <div className="flex items-center justify-center gap-2 mb-6">
-                  {[1, 2, 3, 4, 5].map((step) => (
-                    <div key={step} className="flex items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                        step <= currentStep 
-                          ? 'bg-teal-600 text-white' 
-                          : 'bg-gray-300 text-gray-600'
-                      }`}>
-                        {step < currentStep ? (
-                          <FontAwesomeIcon icon={faCheckCircle} className="w-4 h-4" />
-                        ) : (
-                          step
-                        )}
-                      </div>
-                      {step < 5 && (
-                        <div className={`w-16 h-1 mx-2 ${
-                          step < currentStep ? 'bg-teal-600' : 'bg-gray-300'
-                        }`} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="text-center text-gray-600">
-                  {currentStep === 1 && 'פרטים בסיסיים על העסק'}
-                  {currentStep === 2 && 'פרטי קשר ומיקום'}
-                  {currentStep === 3 && 'תמונות ולוגו'}
-                  {currentStep === 4 && 'שעות פתיחה ושירותים'}
-                  {currentStep === 5 && 'בדיקה אחרונה ושמירה'}
-                </div>
+        <div className="px-4 py-4 sm:py-6">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 sm:w-8 sm:h-8 text-teal-600" />
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">הוספת עסק חדש</h1>
+            </div>
+            
+            <div className="block sm:hidden mb-4">
+              <div className="flex justify-center items-center gap-1">
+                <span className="text-sm font-medium text-teal-600">{currentStep}</span>
+                <span className="text-sm text-gray-500">מתוך 5</span>
               </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className="bg-teal-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(currentStep / 5) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="hidden sm:flex items-center justify-center gap-1 lg:gap-2 mb-6">
+              {[1, 2, 3, 4, 5].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div className={`w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-xs lg:text-sm font-medium ${
+                    step <= currentStep 
+                      ? 'bg-teal-600 text-white' 
+                      : 'bg-gray-300 text-gray-600'
+                  }`}>
+                    {step < currentStep ? (
+                      <FontAwesomeIcon icon={faCheckCircle} className="w-3 h-3 lg:w-4 lg:h-4" />
+                    ) : (
+                      step
+                    )}
+                  </div>
+                  {step < 5 && (
+                    <div className={`w-8 lg:w-16 h-1 mx-1 lg:mx-2 ${
+                      step < currentStep ? 'bg-teal-600' : 'bg-gray-300'
+                    }`} />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center text-sm sm:text-base text-gray-600">
+              {currentStep === 1 && 'פרטים בסיסיים על העסק'}
+              {currentStep === 2 && 'פרטי קשר ומיקום'}
+              {currentStep === 3 && 'תמונות ולוגו'}
+              {currentStep === 4 && 'שעות פתיחה ושירותים'}
+              {currentStep === 5 && 'בדיקה אחרונה ושמירה'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Form Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="row">
-          <div className="col-xs-12">
-            <Card className="max-w-4xl mx-auto p-8">
-              {/* Step 1: Basic Info */}
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">פרטים בסיסיים</h2>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        שם העסק *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                          errors.name ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="הכנס את שם העסק..."
-                      />
-                      {errors.name && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                          {errors.name}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        קטגוריית העסק *
-                      </label>
-                      <select
-                        value={formData.category}
-                        onChange={(e) => handleInputChange('category', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                          errors.category ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      >
-                        <option value="">בחר קטגוריה...</option>
-                        {categories.map((category) => (
-                          <option key={category} value={category}>
-                            {category}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.category && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                          {errors.category}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        תיאור העסק *
-                      </label>
-                      <textarea
-                        value={formData.description}
-                        onChange={(e) => handleInputChange('description', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 min-h-[120px] ${
-                          errors.description ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="ספר קצת על העסק, השירותים והמוצרים..."
-                      />
-                      {errors.description && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                          {errors.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: Contact & Location */}
-              {currentStep === 2 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">פרטי קשר ומיקום</h2>
-                  
-                  {/* Contact Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        טלפון *
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                          errors.phone ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="050-123-4567"
-                      />
-                      {errors.phone && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                          {errors.phone}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        אימייל
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                        placeholder="info@business.co.il"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      אתר אינטרנט
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.website}
-                      onChange={(e) => handleInputChange('website', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                      placeholder="https://www.business.co.il"
-                    />
-                  </div>
-
-                  {/* Location Type Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      סוג מיקום *
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <label className={`cursor-pointer p-4 border-2 rounded-lg transition-colors ${
-                        formData.locationType === 'specific' 
-                          ? 'border-teal-500 bg-teal-50' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}>
-                        <input
-                          type="radio"
-                          name="locationType"
-                          value="specific"
-                          checked={formData.locationType === 'specific'}
-                          onChange={(e) => handleInputChange('locationType', e.target.value)}
-                          className="sr-only"
-                        />
-                        <div className="flex items-center gap-3">
-                          <FontAwesomeIcon icon={faMapMarkerAlt} className="w-5 h-5 text-teal-600" />
-                          <div>
-                            <h3 className="font-medium text-gray-900">מיקום מדויק</h3>
-                            <p className="text-sm text-gray-600">כתובת ספציפית עם קישור Waze</p>
-                          </div>
-                        </div>
-                      </label>
-
-                      <label className={`cursor-pointer p-4 border-2 rounded-lg transition-colors ${
-                        formData.locationType === 'service-areas' 
-                          ? 'border-teal-500 bg-teal-50' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}>
-                        <input
-                          type="radio"
-                          name="locationType"
-                          value="service-areas"
-                          checked={formData.locationType === 'service-areas'}
-                          onChange={(e) => handleInputChange('locationType', e.target.value)}
-                          className="sr-only"
-                        />
-                        <div className="flex items-center gap-3">
-                          <FontAwesomeIcon icon={faGlobe} className="w-5 h-5 text-teal-600" />
-                          <div>
-                            <h3 className="font-medium text-gray-900">אזורי שירות</h3>
-                            <p className="text-sm text-gray-600">מספר עיירות או אזורים</p>
-                          </div>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Specific Location */}
-                  {formData.locationType === 'specific' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        קישור Waze *
-                      </label>
-                      <input
-                        type="url"
-                        value={formData.wazeUrl}
-                        onChange={(e) => handleInputChange('wazeUrl', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                          errors.wazeUrl ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="https://waze.com/ul/..."
-                      />
-                      {errors.wazeUrl && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                          {errors.wazeUrl}
-                        </p>
-                      )}
-                      <p className="mt-1 text-sm text-gray-500">
-                        העתק קישור Waze למיקום המדויק של העסק
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Service Areas */}
-                  {formData.locationType === 'service-areas' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
-                        אזורי שירות *
-                      </label>
-                      <p className="text-sm text-gray-600 mb-4">בחר את האזורים בהם אתה מספק שירות</p>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-medium text-gray-800 mb-3">אזורים כלליים</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                            {SERVICE_AREAS.slice(0, 10).map((area) => (
-                              <label
-                                key={area}
-                                className={`bubble filter cursor-pointer text-center text-sm ${
-                                  formData.serviceAreas.includes(area) ? 'active' : ''
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={formData.serviceAreas.includes(area)}
-                                  onChange={() => handleServiceAreaToggle(area)}
-                                  className="sr-only"
-                                />
-                                {area}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <h4 className="font-medium text-gray-800 mb-3">עיירות ספציפיות</h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                            {israeliCities.slice(0, 16).map((city) => (
-                              <label
-                                key={city}
-                                className={`bubble filter cursor-pointer text-center text-sm ${
-                                  formData.serviceAreas.includes(city) ? 'active' : ''
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={formData.serviceAreas.includes(city)}
-                                  onChange={() => handleServiceAreaToggle(city)}
-                                  className="sr-only"
-                                />
-                                {city}
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      {errors.serviceAreas && (
-                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                          {errors.serviceAreas}
-                        </p>
-                      )}
-                      
-                      {formData.serviceAreas.length > 0 && (
-                        <div className="mt-4 p-3 bg-teal-50 rounded-lg">
-                          <p className="text-sm text-teal-800 mb-2">אזורי השירות שנבחרו:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {formData.serviceAreas.map((area) => (
-                              <span key={area} className="px-2 py-1 bg-teal-200 text-teal-900 rounded text-xs">
-                                {area}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+      <div className="px-4 py-4 sm:py-8">
+        <Card className="w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+          {currentStep === 1 && (
+            <div className="space-y-4 sm:space-y-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">פרטים בסיסיים</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    שם העסק *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    className={getNameClass()}
+                    placeholder="הכנס את שם העסק..."
+                  />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                      {errors.name}
+                    </p>
                   )}
                 </div>
-              )}
 
-              {/* Step 3: Images & Logo */}
-              {currentStep === 3 && (
-                <div className="space-y-8">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">תמונות ולוגו</h2>
-                  
-                  {/* Logo Upload */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FontAwesomeIcon icon={faImage} className="w-5 h-5 text-teal-600" />
-                      לוגו העסק
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">העלה לוגו לעסק שלך (אופציונאלי)</p>
-                    
-                    {!formData.logoUrl ? (
-                      <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-teal-500 transition-colors cursor-pointer">
-                        <FontAwesomeIcon icon={faUpload} className="w-12 h-12 text-gray-400 mb-4" />
-                        <div className="space-y-2">
-                          <p className="text-gray-600">לחץ להעלאת לוגו או גרור קובץ לכאן</p>
-                          <p className="text-sm text-gray-400">PNG, JPG, GIF עד 5MB</p>
-                        </div>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleLogoUpload}
-                          disabled={uploadingLogo}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                        {uploadingLogo && (
-                          <div className="mt-4">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600 mx-auto"></div>
-                            <p className="mt-2 text-sm text-teal-600">מעלה לוגו...</p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="relative inline-block">
-                        <img 
-                          src={formData.logoUrl} 
-                          alt="Business Logo" 
-                          className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={removeLogo}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                        >
-                          <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
-                    
-                    {errors.logo && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                        {errors.logo}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Business Images */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FontAwesomeIcon icon={faImage} className="w-5 h-5 text-teal-600" />
-                      תמונות העסק
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">העלה תמונות של העסק, המוצרים או השירותים (עד 6 תמונות + לוגו)</p>
-                    
-                    {/* Image Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                      {formData.imageUrls.map((imageUrl, index) => (
-                        <div key={index} className="relative">
-                          <img 
-                            src={imageUrl} 
-                            alt={`Business image ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
-                          >
-                            <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                      
-                      {/* Add More Images */}
-                      {formData.imageUrls.length < 6 && (
-                        <div className="relative border-2 border-dashed border-gray-300 rounded-lg h-32 flex items-center justify-center hover:border-teal-500 transition-colors cursor-pointer">
-                          <div className="text-center">
-                            <FontAwesomeIcon icon={faPlus} className="w-8 h-8 text-gray-400 mb-2" />
-                            <p className="text-sm text-gray-600">הוסף תמונה</p>
-                            <p className="text-xs text-gray-400">{formData.imageUrls.length}/6</p>
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={handleImagesUpload}
-                            disabled={uploadingImages}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          />
-                          {uploadingImages && (
-                            <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
-                              <div className="text-center">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600 mx-auto mb-2"></div>
-                                <p className="text-xs text-teal-600">מעלה תמונות...</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {errors.images && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                        {errors.images}
-                      </p>
-                    )}
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    קטגוריית העסק *
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => handleInputChange('category', e.target.value)}
+                    className={getCategoryClass()}
+                  >
+                    <option value="">בחר קטגוריה...</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.category && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                      {errors.category}
+                    </p>
+                  )}
                 </div>
-              )}
 
-              {/* Step 4: Hours & Services */}
-              {currentStep === 4 && (
-                <div className="space-y-8">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">שעות פתיחה ושירותים</h2>
-                  
-                  {/* Opening Hours */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FontAwesomeIcon icon={faClock} className="w-5 h-5 text-teal-600" />
-                      שעות פתיחה
-                    </h3>
-                    <div className="space-y-3">
-                      {daysOfWeek.map((day) => (
-                        <div key={day.key} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                          <div className="w-16 text-sm font-medium text-gray-700">
-                            {day.label}
-                          </div>
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={formData.openHours[day.key].closed}
-                              onChange={(e) => handleHoursChange(day.key, 'closed', e.target.checked)}
-                              className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                            />
-                            <span className="text-sm text-gray-600">סגור</span>
-                          </label>
-                          {!formData.openHours[day.key].closed && (
-                            <>
-                              <input
-                                type="time"
-                                value={formData.openHours[day.key].open}
-                                onChange={(e) => handleHoursChange(day.key, 'open', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                              />
-                              <span className="text-gray-500">עד</span>
-                              <input
-                                type="time"
-                                value={formData.openHours[day.key].close}
-                                onChange={(e) => handleHoursChange(day.key, 'close', e.target.value)}
-                                className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                              />
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Services */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FontAwesomeIcon icon={faTags} className="w-5 h-5 text-teal-600" />
-                      שירותים מיוחדים
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">בחר את השירותים הרלוונטיים לעסק שלך</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {popularServices.map((service) => (
-                        <label
-                          key={service}
-                          className={`bubble filter cursor-pointer text-center ${
-                            formData.serviceTags.includes(service) ? 'active' : ''
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.serviceTags.includes(service)}
-                            onChange={() => handleServiceToggle(service)}
-                            className="sr-only"
-                          />
-                          <span className="text-sm font-medium">{service}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 5: Review */}
-              {currentStep === 5 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">בדיקה אחרונה</h2>
-                  
-                  <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="font-semibold text-gray-800 mb-2">פרטי העסק</h3>
-                        <p><strong>שם:</strong> {formData.name}</p>
-                        <p><strong>קטגוריה:</strong> {formData.category}</p>
-                        <p><strong>תיאור:</strong> {formData.description}</p>
-                      </div>
-                      
-                      <div>
-                        <h3 className="font-semibold text-gray-800 mb-2">פרטי קשר ומיקום</h3>
-                        <p><strong>טלפון:</strong> {formData.phone}</p>
-                        {formData.email && <p><strong>אימייל:</strong> {formData.email}</p>}
-                        {formData.website && <p><strong>אתר:</strong> {formData.website}</p>}
-                        <p><strong>מיקום:</strong> {
-                          formData.locationType === 'specific' 
-                            ? 'מיקום מדויק (Waze)' 
-                            : `אזורי שירות: ${formData.serviceAreas.join(', ')}`
-                        }</p>
-                      </div>
-                    </div>
-
-                    {/* Images Review */}
-                    {(formData.logoUrl || formData.imageUrls.length > 0) && (
-                      <div>
-                        <h3 className="font-semibold text-gray-800 mb-2">תמונות</h3>
-                        <div className="space-y-3">
-                          {formData.logoUrl && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-700 mb-2">לוגו:</p>
-                              <img 
-                                src={formData.logoUrl} 
-                                alt="Business Logo" 
-                                className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200"
-                              />
-                            </div>
-                          )}
-                          {formData.imageUrls.length > 0 && (
-                            <div>
-                              <p className="text-sm font-medium text-gray-700 mb-2">תמונות העסק ({formData.imageUrls.length}):</p>
-                              <div className="grid grid-cols-4 gap-2">
-                                {formData.imageUrls.map((imageUrl, index) => (
-                                  <img 
-                                    key={index}
-                                    src={imageUrl} 
-                                    alt={`Business image ${index + 1}`}
-                                    className="w-16 h-16 object-cover rounded border border-gray-200"
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {formData.serviceTags.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold text-gray-800 mb-2">שירותים</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {formData.serviceTags.map((service) => (
-                            <span
-                              key={service}
-                              className="bubble filter bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm"
-                            >
-                              {service}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-yellow-600 mt-0.5" />
-                      <div className="text-sm text-yellow-800">
-                        <p className="font-medium mb-1">לפני השליחה</p>
-                        <p>אנא וודא שכל הפרטים נכונים. לאחר יצירת העסק, ניתן יהיה לערוך אותו בפרופיל שלך.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-                {currentStep > 1 && (
-                  <Button variant="outline" onClick={prevStep}>
-                    חזור
-                  </Button>
-                )}
-                
-                <div className="mr-auto">
-                  {currentStep < 5 ? (
-                    <Button variant="primary" onClick={nextStep}>
-                      המשך
-                    </Button>
-                  ) : (
-                    <Button variant="primary" onClick={handleSubmit}>
-                      <FontAwesomeIcon icon={faCheckCircle} className="w-5 h-5 ml-2" />
-                      צור עסק
-                    </Button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    תיאור העסק *
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    className={getDescriptionClass()}
+                    placeholder="ספר קצת על העסק, השירותים והמוצרים..."
+                    rows={4}
+                  />
+                  {errors.description && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                      {errors.description}
+                    </p>
                   )}
                 </div>
               </div>
-            </Card>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div className="space-y-4 sm:space-y-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">פרטי קשר ומיקום</h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    טלפון *
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className={getPhoneClass()}
+                    placeholder="050-123-4567"
+                    inputMode="tel"
+                  />
+                  {errors.phone && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                      {errors.phone}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    אימייל
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="w-full px-3 py-3 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                    placeholder="info@business.co.il"
+                    inputMode="email"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  אתר אינטרנט
+                </label>
+                <input
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => handleInputChange('website', e.target.value)}
+                  className="w-full px-3 py-3 sm:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                  placeholder="https://www.business.co.il"
+                  inputMode="url"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  סוג מיקום *
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <label className={getLocationTypeClass('specific')}>
+                    <input
+                      type="radio"
+                      name="locationType"
+                      value="specific"
+                      checked={formData.locationType === 'specific'}
+                      onChange={(e) => handleInputChange('locationType', e.target.value)}
+                      className="sr-only"
+                    />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 flex-shrink-0" />
+                      <div>
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">מיקום מדויק</h3>
+                        <p className="text-xs sm:text-sm text-gray-600">כתובת ספציפית עם קישור Waze</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className={getLocationTypeClass('service-areas')}>
+                    <input
+                      type="radio"
+                      name="locationType"
+                      value="service-areas"
+                      checked={formData.locationType === 'service-areas'}
+                      onChange={(e) => handleInputChange('locationType', e.target.value)}
+                      className="sr-only"
+                    />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <FontAwesomeIcon icon={faGlobe} className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 flex-shrink-0" />
+                      <div>
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">אזורי שירות</h3>
+                        <p className="text-xs sm:text-sm text-gray-600">מספר עיירות או אזורים</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {formData.locationType === 'specific' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    קישור Waze *
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.wazeUrl}
+                    onChange={(e) => handleInputChange('wazeUrl', e.target.value)}
+                    className={getWazeClass()}
+                    placeholder="https://waze.com/ul/..."
+                    inputMode="url"
+                  />
+                  {errors.wazeUrl && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                      {errors.wazeUrl}
+                    </p>
+                  )}
+                  <p className="mt-1 text-sm text-gray-500">
+                    העתק קישור Waze למיקום המדויק של העסק
+                  </p>
+                </div>
+              )}
+
+              {formData.locationType === 'service-areas' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    אזורי שירות *
+                  </label>
+                  <p className="text-sm text-gray-600 mb-4">בחר את האזורים בהם אתה מספק שירות</p>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">אזורים כלליים</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {SERVICE_AREAS.slice(0, 10).map((area) => (
+                          <label
+                            key={area}
+                            className={getServiceAreaClass(area)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.serviceAreas.includes(area)}
+                              onChange={() => handleServiceAreaToggle(area)}
+                              className="sr-only"
+                            />
+                            {area}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">עיירות ספציפיות</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {israeliCities.slice(0, 16).map((city) => (
+                          <label
+                            key={city}
+                            className={getCityClass(city)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.serviceAreas.includes(city)}
+                              onChange={() => handleServiceAreaToggle(city)}
+                              className="sr-only"
+                            />
+                            {city}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {errors.serviceAreas && (
+                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                      {errors.serviceAreas}
+                    </p>
+                  )}
+                  
+                  {formData.serviceAreas.length > 0 && (
+                    <div className="mt-4 p-3 bg-teal-50 rounded-lg">
+                      <p className="text-sm text-teal-800 mb-2">אזורי השירות שנבחרו:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {formData.serviceAreas.map((area) => (
+                          <span key={area} className="px-2 py-1 bg-teal-200 text-teal-900 rounded text-xs">
+                            {area}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div className="space-y-6 sm:space-y-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">תמונות ולוגו</h2>
+              
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+                  <FontAwesomeIcon icon={faImage} className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
+                  לוגו העסק
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">העלה לוגו לעסק שלך (אופציונאלי)</p>
+                
+                {!formData.logoUrl ? (
+                  <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-8 text-center hover:border-teal-500 transition-colors cursor-pointer">
+                    <FontAwesomeIcon icon={faUpload} className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mb-3 sm:mb-4" />
+                    <div className="space-y-1 sm:space-y-2">
+                      <p className="text-sm sm:text-base text-gray-600">לחץ להעלאת לוגו או גרור קובץ לכאן</p>
+                      <p className="text-xs sm:text-sm text-gray-400">PNG, JPG, GIF עד 5MB</p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      disabled={uploadingLogo}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    {uploadingLogo && (
+                      <div className="mt-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600 mx-auto"></div>
+                        <p className="mt-2 text-sm text-teal-600">מעלה לוגו...</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="relative inline-block">
+                    <img 
+                      src={formData.logoUrl} 
+                      alt="Business Logo" 
+                      className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                
+                {errors.logo && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                    {errors.logo}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FontAwesomeIcon icon={faImage} className="w-5 h-5 text-teal-600" />
+                  תמונות העסק
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">העלה תמונות של העסק, המוצרים או השירותים (עד 6 תמונות + לוגו)</p>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                  {formData.imageUrls.map((imageUrl, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={imageUrl} 
+                        alt={`Business image ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {formData.imageUrls.length < 6 && (
+                    <div className="relative border-2 border-dashed border-gray-300 rounded-lg h-32 flex items-center justify-center hover:border-teal-500 transition-colors cursor-pointer">
+                      <div className="text-center">
+                        <FontAwesomeIcon icon={faPlus} className="w-8 h-8 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-600">הוסף תמונה</p>
+                        <p className="text-xs text-gray-400">{formData.imageUrls.length}/6</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImagesUpload}
+                        disabled={uploadingImages}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      {uploadingImages && (
+                        <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600 mx-auto mb-2"></div>
+                            <p className="text-xs text-teal-600">מעלה תמונות...</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {errors.images && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                    {errors.images}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (
+            <div className="space-y-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">שעות פתיחה ושירותים</h2>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FontAwesomeIcon icon={faClock} className="w-5 h-5 text-teal-600" />
+                  שעות פתיחה
+                </h3>
+                <div className="space-y-3">
+                  {daysOfWeek.map((day) => (
+                    <div key={day.key} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-16 text-sm font-medium text-gray-700">
+                        {day.label}
+                      </div>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.openHours[day.key].closed}
+                          onChange={(e) => handleHoursChange(day.key, 'closed', e.target.checked)}
+                          className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-600">סגור</span>
+                      </label>
+                      {!formData.openHours[day.key].closed && (
+                        <>
+                          <input
+                            type="time"
+                            value={formData.openHours[day.key].open}
+                            onChange={(e) => handleHoursChange(day.key, 'open', e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          />
+                          <span className="text-gray-500">עד</span>
+                          <input
+                            type="time"
+                            value={formData.openHours[day.key].close}
+                            onChange={(e) => handleHoursChange(day.key, 'close', e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                          />
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FontAwesomeIcon icon={faTags} className="w-5 h-5 text-teal-600" />
+                  שירותים מיוחדים
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">בחר את השירותים הרלוונטיים לעסק שלך</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {popularServices.map((service) => (
+                    <label
+                      key={service}
+                      className={getServiceClass(service)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.serviceTags.includes(service)}
+                        onChange={() => handleServiceToggle(service)}
+                        className="sr-only"
+                      />
+                      <span className="text-sm font-medium">{service}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 5 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">בדיקה אחרונה</h2>
+              
+              <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-2">פרטי העסק</h3>
+                    <p><strong>שם:</strong> {formData.name}</p>
+                    <p><strong>קטגוריה:</strong> {formData.category}</p>
+                    <p><strong>תיאור:</strong> {formData.description}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-2">פרטי קשר ומיקום</h3>
+                    <p><strong>טלפון:</strong> {formData.phone}</p>
+                    {formData.email && <p><strong>אימייל:</strong> {formData.email}</p>}
+                    {formData.website && <p><strong>אתר:</strong> {formData.website}</p>}
+                    <p><strong>מיקום:</strong> {
+                      formData.locationType === 'specific' 
+                        ? 'מיקום מדויק (Waze)' 
+                        : `אזורי שירות: ${formData.serviceAreas.join(', ')}`
+                    }</p>
+                  </div>
+                </div>
+
+                {(formData.logoUrl || formData.imageUrls.length > 0) && (
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-2">תמונות</h3>
+                    <div className="space-y-3">
+                      {formData.logoUrl && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-2">לוגו:</p>
+                          <img 
+                            src={formData.logoUrl} 
+                            alt="Business Logo" 
+                            className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200"
+                          />
+                        </div>
+                      )}
+                      {formData.imageUrls.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-700 mb-2">תמונות העסק ({formData.imageUrls.length}):</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {formData.imageUrls.map((imageUrl, index) => (
+                              <img 
+                                key={index}
+                                src={imageUrl} 
+                                alt={`Business image ${index + 1}`}
+                                className="w-16 h-16 object-cover rounded border border-gray-200"
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {formData.serviceTags.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-2">שירותים</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {formData.serviceTags.map((service) => (
+                        <span
+                          key={service}
+                          className="bubble filter bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm"
+                        >
+                          {service}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium mb-1">לפני השליחה</p>
+                    <p>אנא וודא שכל הפרטים נכונים. לאחר יצירת העסק, ניתן יהיה לערוך אותו בפרופיל שלך.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
+            {currentStep > 1 && (
+              <Button 
+                variant="outline" 
+                onClick={prevStep}
+                className="w-full sm:w-auto order-2 sm:order-1"
+              >
+                <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2 rotate-180" />
+                חזור
+              </Button>
+            )}
+            
+            <div className={getNavigationButtonClass()}>
+              {currentStep < 5 ? (
+                <Button 
+                  variant="primary" 
+                  onClick={nextStep}
+                  className="w-full sm:w-auto"
+                >
+                  המשך
+                  <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 mr-2" />
+                </Button>
+              ) : (
+                <Button 
+                  variant="primary" 
+                  onClick={handleSubmit}
+                  className="w-full sm:w-auto"
+                >
+                  <FontAwesomeIcon icon={faCheckCircle} className="w-5 h-5 ml-2" />
+                  צור עסק
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
