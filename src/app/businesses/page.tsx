@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faBuilding, 
@@ -10,7 +11,8 @@ import {
   faEnvelope,
   faLock,
   faUserPlus,
-  faSignInAlt
+  faSignInAlt,
+  faClock
 } from '@fortawesome/free-solid-svg-icons';
 import { Button, Card } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,6 +46,58 @@ export default function BusinessesPage() {
 
     loadBusinesses();
   }, [isApproved]);
+
+  const getBusinessStatus = (business: Business) => {
+    const openHours = business.metadata?.openHours;
+    if (!openHours) return null;
+    
+    const today = new Date().getDay();
+    
+    // Check both Hebrew and English day names
+    const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    const englishDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    
+    // Determine which format is used in the data
+    const hasEnglishKeys = englishDays.some(day => openHours[day]);
+    const todayKey = hasEnglishKeys ? englishDays[today] : hebrewDays[today];
+    
+    const todayHours = openHours[todayKey];
+    if (!todayHours || todayHours.closed) {
+      return { status: 'סגור', color: 'text-red-600', bgColor: 'bg-red-50' };
+    }
+    
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const [openHour, openMin] = todayHours.open.split(':').map(Number);
+    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
+    const openTime = openHour * 60 + openMin;
+    const closeTime = closeHour * 60 + closeMin;
+    
+    if (currentTime >= openTime && currentTime <= closeTime) {
+      // Check if closing within an hour
+      const timeUntilClose = closeTime - currentTime;
+      if (timeUntilClose <= 60) {
+        return { 
+          status: `סוגר בקרוב ${todayHours.close}`, 
+          color: 'text-yellow-700', 
+          bgColor: 'bg-yellow-50' 
+        };
+      }
+      return { 
+        status: `פתוח עד ${todayHours.close}`, 
+        color: 'text-green-700', 
+        bgColor: 'bg-green-50' 
+      };
+    } else if (currentTime < openTime) {
+      return { 
+        status: `פותח ב-${todayHours.open}`, 
+        color: 'text-blue-700', 
+        bgColor: 'bg-blue-50' 
+      };
+    } else {
+      return { status: 'סגור', color: 'text-red-600', bgColor: 'bg-red-50' };
+    }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -124,8 +178,18 @@ export default function BusinessesPage() {
               <Link key={business.id} href={`/businesses/${business.id}`}>
                 <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
                   <div className="flex items-start gap-4">
-                    <div className="bg-teal-100 p-3 rounded-lg">
-                      <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
+                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-teal-100 flex items-center justify-center">
+                      {business.metadata?.images?.logoUrl ? (
+                        <Image
+                          src={business.metadata.images.logoUrl}
+                          alt={`לוגו ${business.name}`}
+                          width={48}
+                          height={48}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">
@@ -134,6 +198,17 @@ export default function BusinessesPage() {
                       <p className="text-sm text-teal-600 mb-2 font-medium">
                         {business.metadata?.category || 'עסק'}
                       </p>
+                      
+                      {(() => {
+                        const status = getBusinessStatus(business);
+                        return status ? (
+                          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mb-3 ${status.color} ${status.bgColor}`}>
+                            <FontAwesomeIcon icon={faClock} className="w-3 h-3 ml-1" />
+                            {status.status}
+                          </div>
+                        ) : null;
+                      })()}
+                      
                       <p className="text-gray-600 mb-4 line-clamp-2">
                         {business.description}
                       </p>

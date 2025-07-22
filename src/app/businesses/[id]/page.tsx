@@ -116,11 +116,17 @@ const BusinessPage: React.FC<BusinessPageProps> = () => {
   const getCurrentDayStatus = () => {
     if (!openHours) return null;
     
-    const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
     const today = new Date().getDay();
-    const todayName = days[today];
     
-    const todayHours = openHours[todayName];
+    // Check both Hebrew and English day names
+    const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    const englishDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    
+    // Determine which format is used in the data
+    const hasEnglishKeys = englishDays.some(day => openHours[day]);
+    const todayKey = hasEnglishKeys ? englishDays[today] : hebrewDays[today];
+    
+    const todayHours = openHours[todayKey];
     if (!todayHours || todayHours.closed) {
       return { status: 'סגור היום', color: 'text-red-600' };
     }
@@ -365,14 +371,57 @@ const BusinessPage: React.FC<BusinessPageProps> = () => {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">שעות פעילות</h2>
                 <div className="space-y-2">
-                  {Object.entries(openHours).map(([day, hours]) => (
-                    <div key={day} className="flex justify-between items-center py-1">
-                      <span className="font-medium text-gray-700">{day}</span>
-                      <span className="text-gray-600">
-                        {hours.closed ? 'סגור' : `${hours.open} - ${hours.close}`}
-                      </span>
-                    </div>
-                  ))}
+                  {Object.keys(openHours).length > 0 ? (
+                    (() => {
+                      // Create day mapping for both Hebrew and English
+                      const dayMap: Record<string, string> = {
+                        'sunday': 'ראשון',
+                        'monday': 'שני', 
+                        'tuesday': 'שלישי',
+                        'wednesday': 'רביעי',
+                        'thursday': 'חמישי',
+                        'friday': 'שישי',
+                        'saturday': 'שבת',
+                        'ראשון': 'ראשון',
+                        'שני': 'שני',
+                        'שלישי': 'שלישי',
+                        'רביעי': 'רביעי',
+                        'חמישי': 'חמישי',
+                        'שישי': 'שישי',
+                        'שבת': 'שבת'
+                      };
+                      
+                      // Order days correctly
+                      const orderedDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                      const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+                      
+                      // Check if data uses English or Hebrew keys
+                      const hasEnglishKeys = orderedDays.some(day => openHours[day]);
+                      const daysToUse = hasEnglishKeys ? orderedDays : hebrewDays;
+                      
+                      return daysToUse
+                        .filter(day => openHours[day])
+                        .map((day) => {
+                          const hours = openHours[day];
+                          const today = new Date().getDay();
+                          const isToday = (hasEnglishKeys ? orderedDays[today] === day : hebrewDays[today] === day);
+                          const displayName = dayMap[day] || day;
+                          
+                          return (
+                            <div key={day} className={`flex justify-between items-center py-1 ${isToday ? 'bg-teal-50 px-2 rounded' : ''}`}>
+                              <span className={`font-medium ${isToday ? 'text-teal-800' : 'text-gray-700'}`}>
+                                {displayName}
+                              </span>
+                              <span className={`${isToday ? 'text-teal-700 font-medium' : 'text-gray-600'}`}>
+                                {hours.closed ? 'סגור' : `${hours.open} - ${hours.close}`}
+                              </span>
+                            </div>
+                          );
+                        });
+                    })()
+                  ) : (
+                    <p className="text-gray-500">שעות פעילות לא זמינות</p>
+                  )}
                 </div>
               </div>
             )}
