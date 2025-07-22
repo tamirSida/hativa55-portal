@@ -13,10 +13,15 @@ import {
   faImage,
   faTags,
   faCheckCircle,
-  faExclamationTriangle
+  faExclamationTriangle,
+  faUpload,
+  faTrash,
+  faPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { Button, Card } from '@/components/ui';
-import { israeliCities } from '@/utils/israeliData';
+import { israeliCities, SERVICE_AREAS } from '@/utils/israeliData';
+import { ClientCloudinaryService } from '@/services/ClientCloudinaryService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface BusinessFormData {
   name: string;
@@ -25,9 +30,11 @@ interface BusinessFormData {
   phone: string;
   email: string;
   website: string;
-  address: string;
-  city: string;
-  wazeUrl: string;
+  locationType: 'specific' | 'service-areas'; // New field for location type
+  wazeUrl: string; // For specific location
+  serviceAreas: string[]; // For service areas
+  logoUrl: string; // Business logo
+  imageUrls: string[]; // Business/service images
   openHours: {
     [key: string]: { open: string; close: string; closed: boolean };
   };
@@ -36,7 +43,7 @@ interface BusinessFormData {
 
 const categories = [
   'מסעדנות ואוכל',
-  'טכנולוgia ומחשבים',
+  'טכנולוגיה ומחשבים',
   'עיצוב ואדריכלות',
   'שירותים משפטיים',
   'בריאות ורפואה',
@@ -76,7 +83,9 @@ const daysOfWeek = [
 ];
 
 function AddBusinessPage() {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const cloudinaryService = new ClientCloudinaryService();
   const [formData, setFormData] = useState<BusinessFormData>({
     name: '',
     description: '',
@@ -84,9 +93,11 @@ function AddBusinessPage() {
     phone: '',
     email: '',
     website: '',
-    address: '',
-    city: '',
+    locationType: 'specific',
     wazeUrl: '',
+    serviceAreas: [],
+    logoUrl: '',
+    imageUrls: [],
     openHours: {
       sunday: { open: '09:00', close: '17:00', closed: false },
       monday: { open: '09:00', close: '17:00', closed: false },
@@ -100,6 +111,8 @@ function AddBusinessPage() {
   });
 
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -124,6 +137,84 @@ function AddBusinessPage() {
     }));
   };
 
+  const handleServiceAreaToggle = (area: string) => {
+    setFormData(prev => ({
+      ...prev,
+      serviceAreas: prev.serviceAreas.includes(area)
+        ? prev.serviceAreas.filter(a => a !== area)
+        : [...prev.serviceAreas, area]
+    }));
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploadingLogo(true);
+    setErrors(prev => ({ ...prev, logo: '' }));
+
+    try {
+      const result = await cloudinaryService.uploadImage({
+        file,
+        folder: 'community-platform/businesses/logos'
+      });
+      
+      setFormData(prev => ({ ...prev, logoUrl: result.secureUrl }));
+    } catch (error: any) {
+      setErrors(prev => ({ ...prev, logo: error.message || 'שגיאה בהעלאת הלוגו. נסה שוב.' }));
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleImagesUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0 || !user) return;
+
+    // Check total images limit (max 6 business images + 1 logo = 7 total)
+    const maxBusinessImages = 6;
+    
+    if (formData.imageUrls.length + files.length > maxBusinessImages) {
+      setErrors(prev => ({ ...prev, images: `ניתן להעלות עד ${maxBusinessImages} תמונות עסק` }));
+      return;
+    }
+
+    setUploadingImages(true);
+    setErrors(prev => ({ ...prev, images: '' }));
+
+    try {
+      const uploadPromises = files.map(file => 
+        cloudinaryService.uploadImage({
+          file,
+          folder: 'community-platform/businesses/gallery'
+        })
+      );
+      
+      const results = await Promise.all(uploadPromises);
+      const newImageUrls = results.map(result => result.secureUrl);
+      
+      setFormData(prev => ({
+        ...prev,
+        imageUrls: [...prev.imageUrls, ...newImageUrls]
+      }));
+    } catch (error: any) {
+      setErrors(prev => ({ ...prev, images: error.message || 'שגיאה בהעלאת התמונות. נסה שוב.' }));
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+    }));
+  };
+
+  const removeLogo = () => {
+    setFormData(prev => ({ ...prev, logoUrl: '' }));
+  };
+
   const handleHoursChange = (day: string, field: 'open' | 'close' | 'closed', value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -146,8 +237,12 @@ function AddBusinessPage() {
       if (!formData.category) newErrors.category = 'יש לבחור קטגוריה';
     } else if (step === 2) {
       if (!formData.phone.trim()) newErrors.phone = 'מספר טלפון נדרש';
-      if (!formData.address.trim()) newErrors.address = 'כתובת נדרשת';
-      if (!formData.city) newErrors.city = 'יש לבחור עיר';
+      
+      if (formData.locationType === 'specific') {
+        if (!formData.wazeUrl.trim()) newErrors.wazeUrl = 'קישור Waze נדרש למיקום מדויק';
+      } else if (formData.locationType === 'service-areas') {
+        if (formData.serviceAreas.length === 0) newErrors.serviceAreas = 'יש לבחור לפחות אזור שירות אחד';
+      }
     }
 
     setErrors(newErrors);
@@ -156,7 +251,7 @@ function AddBusinessPage() {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, 5));
     }
   };
 
@@ -191,7 +286,7 @@ function AddBusinessPage() {
                 
                 {/* Progress Steps */}
                 <div className="flex items-center justify-center gap-2 mb-6">
-                  {[1, 2, 3, 4].map((step) => (
+                  {[1, 2, 3, 4, 5].map((step) => (
                     <div key={step} className="flex items-center">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                         step <= currentStep 
@@ -204,7 +299,7 @@ function AddBusinessPage() {
                           step
                         )}
                       </div>
-                      {step < 4 && (
+                      {step < 5 && (
                         <div className={`w-16 h-1 mx-2 ${
                           step < currentStep ? 'bg-teal-600' : 'bg-gray-300'
                         }`} />
@@ -216,8 +311,9 @@ function AddBusinessPage() {
                 <div className="text-center text-gray-600">
                   {currentStep === 1 && 'פרטים בסיסיים על העסק'}
                   {currentStep === 2 && 'פרטי קשר ומיקום'}
-                  {currentStep === 3 && 'שעות פתיחה ושירותים'}
-                  {currentStep === 4 && 'בדיקה אחרונה ושמירה'}
+                  {currentStep === 3 && 'תמונות ולוגו'}
+                  {currentStep === 4 && 'שעות פתיחה ושירותים'}
+                  {currentStep === 5 && 'בדיקה אחרונה ושמירה'}
                 </div>
               </div>
             </div>
@@ -311,6 +407,7 @@ function AddBusinessPage() {
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">פרטי קשר ומיקום</h2>
                   
+                  {/* Contact Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -360,75 +457,289 @@ function AddBusinessPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        עיר *
+                  {/* Location Type Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      סוג מיקום *
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <label className={`cursor-pointer p-4 border-2 rounded-lg transition-colors ${
+                        formData.locationType === 'specific' 
+                          ? 'border-teal-500 bg-teal-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="locationType"
+                          value="specific"
+                          checked={formData.locationType === 'specific'}
+                          onChange={(e) => handleInputChange('locationType', e.target.value)}
+                          className="sr-only"
+                        />
+                        <div className="flex items-center gap-3">
+                          <FontAwesomeIcon icon={faMapMarkerAlt} className="w-5 h-5 text-teal-600" />
+                          <div>
+                            <h3 className="font-medium text-gray-900">מיקום מדויק</h3>
+                            <p className="text-sm text-gray-600">כתובת ספציפית עם קישור Waze</p>
+                          </div>
+                        </div>
                       </label>
-                      <select
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                          errors.city ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      >
-                        <option value="">בחר עיר...</option>
-                        {israeliCities.map((city) => (
-                          <option key={city} value={city}>
-                            {city}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.city && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                          {errors.city}
-                        </p>
-                      )}
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        כתובת מדוייקת *
+                      <label className={`cursor-pointer p-4 border-2 rounded-lg transition-colors ${
+                        formData.locationType === 'service-areas' 
+                          ? 'border-teal-500 bg-teal-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="locationType"
+                          value="service-areas"
+                          checked={formData.locationType === 'service-areas'}
+                          onChange={(e) => handleInputChange('locationType', e.target.value)}
+                          className="sr-only"
+                        />
+                        <div className="flex items-center gap-3">
+                          <FontAwesomeIcon icon={faGlobe} className="w-5 h-5 text-teal-600" />
+                          <div>
+                            <h3 className="font-medium text-gray-900">אזורי שירות</h3>
+                            <p className="text-sm text-gray-600">מספר עיירות או אזורים</p>
+                          </div>
+                        </div>
                       </label>
-                      <input
-                        type="text"
-                        value={formData.address}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                          errors.address ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="רחוב ומספר בית"
-                      />
-                      {errors.address && (
-                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
-                          {errors.address}
-                        </p>
-                      )}
                     </div>
                   </div>
 
+                  {/* Specific Location */}
+                  {formData.locationType === 'specific' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        קישור Waze *
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.wazeUrl}
+                        onChange={(e) => handleInputChange('wazeUrl', e.target.value)}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
+                          errors.wazeUrl ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="https://waze.com/ul/..."
+                      />
+                      {errors.wazeUrl && (
+                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                          {errors.wazeUrl}
+                        </p>
+                      )}
+                      <p className="mt-1 text-sm text-gray-500">
+                        העתק קישור Waze למיקום המדויק של העסק
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Service Areas */}
+                  {formData.locationType === 'service-areas' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        אזורי שירות *
+                      </label>
+                      <p className="text-sm text-gray-600 mb-4">בחר את האזורים בהם אתה מספק שירות</p>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-medium text-gray-800 mb-3">אזורים כלליים</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {SERVICE_AREAS.slice(0, 10).map((area) => (
+                              <label
+                                key={area}
+                                className={`bubble filter cursor-pointer text-center text-sm ${
+                                  formData.serviceAreas.includes(area) ? 'active' : ''
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={formData.serviceAreas.includes(area)}
+                                  onChange={() => handleServiceAreaToggle(area)}
+                                  className="sr-only"
+                                />
+                                {area}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-medium text-gray-800 mb-3">עיירות ספציפיות</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                            {israeliCities.slice(0, 16).map((city) => (
+                              <label
+                                key={city}
+                                className={`bubble filter cursor-pointer text-center text-sm ${
+                                  formData.serviceAreas.includes(city) ? 'active' : ''
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={formData.serviceAreas.includes(city)}
+                                  onChange={() => handleServiceAreaToggle(city)}
+                                  className="sr-only"
+                                />
+                                {city}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {errors.serviceAreas && (
+                        <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                          <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                          {errors.serviceAreas}
+                        </p>
+                      )}
+                      
+                      {formData.serviceAreas.length > 0 && (
+                        <div className="mt-4 p-3 bg-teal-50 rounded-lg">
+                          <p className="text-sm text-teal-800 mb-2">אזורי השירות שנבחרו:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {formData.serviceAreas.map((area) => (
+                              <span key={area} className="px-2 py-1 bg-teal-200 text-teal-900 rounded text-xs">
+                                {area}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Step 3: Images & Logo */}
+              {currentStep === 3 && (
+                <div className="space-y-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">תמונות ולוגו</h2>
+                  
+                  {/* Logo Upload */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      קישור Waze (אופציונאלי)
-                    </label>
-                    <input
-                      type="url"
-                      value={formData.wazeUrl}
-                      onChange={(e) => handleInputChange('wazeUrl', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                      placeholder="https://waze.com/ul/..."
-                    />
-                    <p className="mt-1 text-sm text-gray-500">
-                      הוסף קישור Waze לניווט נוח יותר ללקוחות
-                    </p>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <FontAwesomeIcon icon={faImage} className="w-5 h-5 text-teal-600" />
+                      לוגו העסק
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">העלה לוגו לעסק שלך (אופציונאלי)</p>
+                    
+                    {!formData.logoUrl ? (
+                      <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-teal-500 transition-colors cursor-pointer">
+                        <FontAwesomeIcon icon={faUpload} className="w-12 h-12 text-gray-400 mb-4" />
+                        <div className="space-y-2">
+                          <p className="text-gray-600">לחץ להעלאת לוגו או גרור קובץ לכאן</p>
+                          <p className="text-sm text-gray-400">PNG, JPG, GIF עד 5MB</p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          disabled={uploadingLogo}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        {uploadingLogo && (
+                          <div className="mt-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600 mx-auto"></div>
+                            <p className="mt-2 text-sm text-teal-600">מעלה לוגו...</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="relative inline-block">
+                        <img 
+                          src={formData.logoUrl} 
+                          alt="Business Logo" 
+                          className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeLogo}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                        >
+                          <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                    
+                    {errors.logo && (
+                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                        <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                        {errors.logo}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Business Images */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                      <FontAwesomeIcon icon={faImage} className="w-5 h-5 text-teal-600" />
+                      תמונות העסק
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">העלה תמונות של העסק, המוצרים או השירותים (עד 6 תמונות + לוגו)</p>
+                    
+                    {/* Image Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                      {formData.imageUrls.map((imageUrl, index) => (
+                        <div key={index} className="relative">
+                          <img 
+                            src={imageUrl} 
+                            alt={`Business image ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                          >
+                            <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      {/* Add More Images */}
+                      {formData.imageUrls.length < 6 && (
+                        <div className="relative border-2 border-dashed border-gray-300 rounded-lg h-32 flex items-center justify-center hover:border-teal-500 transition-colors cursor-pointer">
+                          <div className="text-center">
+                            <FontAwesomeIcon icon={faPlus} className="w-8 h-8 text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-600">הוסף תמונה</p>
+                            <p className="text-xs text-gray-400">{formData.imageUrls.length}/6</p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleImagesUpload}
+                            disabled={uploadingImages}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          {uploadingImages && (
+                            <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center">
+                              <div className="text-center">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600 mx-auto mb-2"></div>
+                                <p className="text-xs text-teal-600">מעלה תמונות...</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {errors.images && (
+                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                        <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4" />
+                        {errors.images}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Step 3: Hours & Services */}
-              {currentStep === 3 && (
+              {/* Step 4: Hours & Services */}
+              {currentStep === 4 && (
                 <div className="space-y-8">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">שעות פתיחה ושירותים</h2>
                   
@@ -504,8 +815,8 @@ function AddBusinessPage() {
                 </div>
               )}
 
-              {/* Step 4: Review */}
-              {currentStep === 4 && (
+              {/* Step 5: Review */}
+              {currentStep === 5 && (
                 <div className="space-y-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">בדיקה אחרונה</h2>
                   
@@ -519,13 +830,51 @@ function AddBusinessPage() {
                       </div>
                       
                       <div>
-                        <h3 className="font-semibold text-gray-800 mb-2">פרטי קשר</h3>
+                        <h3 className="font-semibold text-gray-800 mb-2">פרטי קשר ומיקום</h3>
                         <p><strong>טלפון:</strong> {formData.phone}</p>
                         {formData.email && <p><strong>אימייל:</strong> {formData.email}</p>}
                         {formData.website && <p><strong>אתר:</strong> {formData.website}</p>}
-                        <p><strong>כתובת:</strong> {formData.address}, {formData.city}</p>
+                        <p><strong>מיקום:</strong> {
+                          formData.locationType === 'specific' 
+                            ? 'מיקום מדויק (Waze)' 
+                            : `אזורי שירות: ${formData.serviceAreas.join(', ')}`
+                        }</p>
                       </div>
                     </div>
+
+                    {/* Images Review */}
+                    {(formData.logoUrl || formData.imageUrls.length > 0) && (
+                      <div>
+                        <h3 className="font-semibold text-gray-800 mb-2">תמונות</h3>
+                        <div className="space-y-3">
+                          {formData.logoUrl && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 mb-2">לוגו:</p>
+                              <img 
+                                src={formData.logoUrl} 
+                                alt="Business Logo" 
+                                className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200"
+                              />
+                            </div>
+                          )}
+                          {formData.imageUrls.length > 0 && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700 mb-2">תמונות העסק ({formData.imageUrls.length}):</p>
+                              <div className="grid grid-cols-4 gap-2">
+                                {formData.imageUrls.map((imageUrl, index) => (
+                                  <img 
+                                    key={index}
+                                    src={imageUrl} 
+                                    alt={`Business image ${index + 1}`}
+                                    className="w-16 h-16 object-cover rounded border border-gray-200"
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {formData.serviceTags.length > 0 && (
                       <div>
@@ -565,7 +914,7 @@ function AddBusinessPage() {
                 )}
                 
                 <div className="mr-auto">
-                  {currentStep < 4 ? (
+                  {currentStep < 5 ? (
                     <Button variant="primary" onClick={nextStep}>
                       המשך
                     </Button>

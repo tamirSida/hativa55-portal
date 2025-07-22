@@ -302,10 +302,15 @@ export default function AdminDashboard() {
                         <h4 className="font-medium text-gray-900">{user.name}</h4>
                         <p className="text-sm text-gray-600">{user.email}</p>
                         <p className="text-xs text-gray-500">
-                          נרשם: {user.createdAt instanceof Date 
-                            ? user.createdAt.toLocaleDateString('he-IL')
-                            : user.createdAt?.toDate?.()?.toLocaleDateString('he-IL') || 'לא זמין'
-                          }
+                          נרשם: {(() => {
+                            if (user.createdAt instanceof Date) {
+                              return user.createdAt.toLocaleDateString('he-IL');
+                            }
+                            if (user.createdAt && typeof user.createdAt === 'object' && 'toDate' in user.createdAt) {
+                              return (user.createdAt as any).toDate().toLocaleDateString('he-IL');
+                            }
+                            return 'לא זמין';
+                          })()}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
