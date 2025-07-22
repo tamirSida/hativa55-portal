@@ -193,79 +193,105 @@ export default function BusinessesPage() {
             </h3>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
             {businesses.map((business) => (
               <Link key={business.id} href={`/businesses/${business.id}`}>
-                <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-teal-100 flex items-center justify-center">
-                      {business.metadata?.images?.logoUrl ? (
-                        <Image
-                          src={business.metadata.images.logoUrl}
-                          alt={`לוגו ${business.name}`}
-                          width={48}
-                          height={48}
-                          className="object-cover w-full h-full"
-                        />
-                      ) : (
-                        <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">
-                        {business.name}
-                      </h3>
-                      <p className="text-sm text-teal-600 mb-2 font-medium">
-                        {business.metadata?.category || 'עסק'}
-                      </p>
-                      
-                      {(() => {
-                        const status = getBusinessStatus(business);
-                        return status ? (
-                          <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mb-3 ${status.color} ${status.bgColor}`}>
-                            <FontAwesomeIcon icon={faClock} className="w-3 h-3 ml-1" />
-                            {status.status}
-                          </div>
-                        ) : null;
-                      })()}
-                      
-                      <p className="text-gray-600 mb-4 line-clamp-2">
-                        {business.description}
-                      </p>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
-                          {getLocationDisplayText(business.wazeUrl, business.serviceAreas)}
-                        </div>
-                        
-                        {isApproved ? (
-                          <div className="space-y-1">
-                            {business.metadata?.contactInfo?.phone && (
-                              <div className="flex items-center text-sm text-gray-500">
-                                <FontAwesomeIcon icon={faPhone} className="w-4 h-4 ml-2" />
-                                {business.metadata.contactInfo.phone}
-                              </div>
-                            )}
-                            {business.metadata?.contactInfo?.email && (
-                              <div className="flex items-center text-sm text-gray-500">
-                                <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 ml-2" />
-                                {business.metadata.contactInfo.email}
-                              </div>
-                            )}
-                            <p className="text-xs text-gray-400 mt-2">
-                              בעלים: {business.ownerName}
-                            </p>
-                          </div>
+                <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer max-w-sm mx-auto">
+                  <div className="space-y-3">
+                    {/* Header with logo and title */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-teal-100 flex items-center justify-center flex-shrink-0">
+                        {business.metadata?.images?.logoUrl ? (
+                          <Image
+                            src={business.metadata.images.logoUrl}
+                            alt={`לוגו ${business.name}`}
+                            width={40}
+                            height={40}
+                            className="object-cover w-full h-full"
+                          />
                         ) : (
-                          <div className="bg-gray-100 p-3 rounded-lg">
-                            <p className="text-xs text-gray-500 text-center">
-                              פרטי קשר זמינים למשתמשים מאושרים בלבד
-                            </p>
-                          </div>
+                          <FontAwesomeIcon icon={faBuilding} className="w-5 h-5 text-teal-600" />
                         )}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
+                          {business.name}
+                        </h3>
+                        <p className="text-xs text-teal-600 font-medium">
+                          {business.metadata?.category || 'עסק'}
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Status */}
+                    {(() => {
+                      const status = getBusinessStatus(business);
+                      return status ? (
+                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status.color} ${status.bgColor}`}>
+                          <FontAwesomeIcon icon={faClock} className="w-3 h-3 ml-1" />
+                          {status.status}
+                        </div>
+                      ) : null;
+                    })()}
+                    
+                    {/* Description */}
+                    <p className="text-gray-600 text-sm line-clamp-2">
+                      {business.description}
+                    </p>
+
+                    {/* Tags */}
+                    {business.tags && business.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {business.tags.slice(0, 3).map((tag, index) => (
+                          <span
+                            key={index}
+                            className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {business.tags.length > 3 && (
+                          <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            +{business.tags.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Location */}
+                    <div className="flex items-center text-xs text-gray-500">
+                      <FontAwesomeIcon icon={faMapMarkerAlt} className="w-3 h-3 ml-1 flex-shrink-0" />
+                      <span className="truncate">
+                        {getLocationDisplayText(business.wazeUrl, business.serviceAreas)}
+                      </span>
+                    </div>
+                    
+                    {/* Contact Info */}
+                    {isApproved ? (
+                      <div className="space-y-1">
+                        {business.metadata?.contactInfo?.phone && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <FontAwesomeIcon icon={faPhone} className="w-3 h-3 ml-1 flex-shrink-0" />
+                            <span className="truncate">{business.metadata.contactInfo.phone}</span>
+                          </div>
+                        )}
+                        {business.metadata?.contactInfo?.email && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 ml-1 flex-shrink-0" />
+                            <span className="truncate">{business.metadata.contactInfo.email}</span>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400">
+                          בעלים: {business.ownerName}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-100 p-2 rounded-lg">
+                        <p className="text-xs text-gray-500 text-center">
+                          פרטי קשר זמינים למשתמשים מאושרים בלבד
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </Card>
               </Link>

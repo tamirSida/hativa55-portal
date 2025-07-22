@@ -47,6 +47,23 @@ export class BusinessService extends BaseService<Business> {
     }
   }
 
+  public async searchBusinesses(searchTerm: string): Promise<Business[]> {
+    try {
+      const allBusinesses = await this.getActiveBusinesses();
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      
+      return allBusinesses.filter(business => 
+        business.name.toLowerCase().includes(lowerSearchTerm) ||
+        business.description.toLowerCase().includes(lowerSearchTerm) ||
+        business.metadata?.category?.toLowerCase().includes(lowerSearchTerm) ||
+        business.tags.some(tag => tag.toLowerCase().includes(lowerSearchTerm)) ||
+        business.serviceTags.some(tag => tag.toLowerCase().includes(lowerSearchTerm))
+      );
+    } catch (error) {
+      throw new Error(`Failed to search businesses: ${error}`);
+    }
+  }
+
   public async getServiceProviders(): Promise<Business[]> {
     try {
       const allBusinesses = await this.getActiveBusinesses();

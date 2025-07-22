@@ -7,6 +7,7 @@ export interface IBusiness {
   wazeUrl?: string;
   serviceAreas?: string[];
   serviceTags: string[];
+  tags: string[];
   jobPostings: string[];
   isActive: boolean;
   createdAt: Date;
@@ -43,6 +44,7 @@ export class Business implements IBusiness {
   public wazeUrl?: string;
   public serviceAreas?: string[];
   public serviceTags: string[];
+  public tags: string[];
   public jobPostings: string[];
   public isActive: boolean;
   public createdAt: Date;
@@ -68,6 +70,7 @@ export class Business implements IBusiness {
     if (data.wazeUrl) this.wazeUrl = data.wazeUrl;
     if (data.serviceAreas) this.serviceAreas = data.serviceAreas;
     this.serviceTags = data.serviceTags || [];
+    this.tags = data.tags || [];
     this.jobPostings = data.jobPostings || [];
     this.isActive = data.isActive ?? true;
     this.createdAt = data.createdAt || new Date();
@@ -92,6 +95,21 @@ export class Business implements IBusiness {
     const index = this.serviceTags.indexOf(tag);
     if (index > -1) {
       this.serviceTags.splice(index, 1);
+      this.updatedAt = new Date();
+    }
+  }
+
+  public addTag(tag: string): void {
+    if (!this.tags.includes(tag)) {
+      this.tags.push(tag);
+      this.updatedAt = new Date();
+    }
+  }
+
+  public removeTag(tag: string): void {
+    const index = this.tags.indexOf(tag);
+    if (index > -1) {
+      this.tags.splice(index, 1);
       this.updatedAt = new Date();
     }
   }
@@ -135,6 +153,7 @@ export class Business implements IBusiness {
       name: this.name,
       description: this.description,
       serviceTags: this.serviceTags,
+      tags: this.tags,
       jobPostings: this.jobPostings,
       isActive: this.isActive,
       createdAt: this.createdAt,

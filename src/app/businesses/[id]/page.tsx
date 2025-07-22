@@ -283,6 +283,23 @@ const BusinessPage: React.FC<BusinessPageProps> = () => {
               </div>
             )}
 
+            {/* Tags */}
+            {business.tags && business.tags.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">תגיות</h2>
+                <div className="flex flex-wrap gap-2">
+                  {business.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-block px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Location Information */}
             {(business.wazeUrl || (business.serviceAreas && business.serviceAreas.length > 0)) && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

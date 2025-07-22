@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { withAuth } from '@/components/auth';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -16,13 +17,16 @@ import {
   faExclamationTriangle,
   faUpload,
   faTrash,
-  faPlus
+  faPlus,
+  faArrowLeft
 } from '@fortawesome/free-solid-svg-icons';
 import { Button, Card } from '@/components/ui';
 import { israeliCities, SERVICE_AREAS } from '@/utils/israeliData';
 import { ClientCloudinaryService } from '@/services/ClientCloudinaryService';
 import { BusinessService } from '@/services/BusinessService';
 import { useAuth } from '@/hooks/useAuth';
+import { Business } from '@/models/Business';
+import Link from 'next/link';
 
 interface BusinessFormData {
   name: string;
@@ -107,9 +111,13 @@ const daysOfWeek = [
   { key: 'saturday', label: 'שבת' }
 ];
 
-function AddBusinessPage() {
+function EditBusinessPage() {
+  const { id } = useParams();
+  const router = useRouter();
   const { user, firebaseUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [loading, setLoading] = useState(true);
   const cloudinaryService = new ClientCloudinaryService();
   
   const [formData, setFormData] = useState<BusinessFormData>({
@@ -140,6 +148,67 @@ function AddBusinessPage() {
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Load business data on mount
+  useEffect(() => {
+    const loadBusiness = async () => {
+      if (!id || typeof id !== 'string' || !firebaseUser) return;
+      
+      try {
+        setLoading(true);
+        const businessService = new BusinessService();
+        const businessData = await businessService.getById(id);
+        
+        if (!businessData) {
+          setErrors({ load: 'העסק לא נמצא' });
+          return;
+        }
+        
+        // Check if user owns this business
+        if (businessData.ownerId !== firebaseUser.uid) {
+          setErrors({ load: 'אין לך הרשאה לערוך עסק זה' });
+          return;
+        }
+        
+        setBusiness(businessData);
+        
+        // Populate form data from business
+        setFormData({
+          name: businessData.name,
+          description: businessData.description,
+          category: businessData.metadata?.category || '',
+          phone: businessData.metadata?.contactInfo?.phone || '',
+          email: businessData.metadata?.contactInfo?.email || '',
+          website: businessData.metadata?.contactInfo?.website || '',
+          locationType: businessData.metadata?.locationType || 'specific',
+          wazeUrl: businessData.wazeUrl || '',
+          serviceAreas: businessData.serviceAreas || [],
+          logoUrl: businessData.metadata?.images?.logoUrl || '',
+          imageUrls: businessData.metadata?.images?.galleryUrls || [],
+          openHours: businessData.metadata?.openHours || {
+            sunday: { open: '09:00', close: '17:00', closed: false },
+            monday: { open: '09:00', close: '17:00', closed: false },
+            tuesday: { open: '09:00', close: '17:00', closed: false },
+            wednesday: { open: '09:00', close: '17:00', closed: false },
+            thursday: { open: '09:00', close: '17:00', closed: false },
+            friday: { open: '09:00', close: '14:00', closed: false },
+            saturday: { open: '00:00', close: '00:00', closed: true }
+          },
+          serviceTags: businessData.serviceTags || [],
+          tags: businessData.tags || []
+        });
+        
+      } catch (error) {
+        console.error('Error loading business:', error);
+        setErrors({ load: 'שגיאה בטעינת פרטי העסק' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBusiness();
+  }, [id, firebaseUser]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -294,18 +363,15 @@ function AddBusinessPage() {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(currentStep) || !firebaseUser) return;
+    if (!validateStep(currentStep) || !firebaseUser || !business) return;
 
-    setUploadingImages(true); // Show loading state
+    setSaving(true);
     
     try {
-      // Use BusinessService directly from client-side
       const businessService = new BusinessService();
       
-      // Create business data for the model
-      const businessData = {
-        ownerId: firebaseUser.uid,
-        ownerName: user?.name || firebaseUser.displayName || 'שם לא זמין',
+      // Create updated business data
+      const updateData = {
         name: formData.name,
         description: formData.description,
         serviceTags: formData.serviceTags || [],
@@ -328,67 +394,61 @@ function AddBusinessPage() {
 
       // Add location data based on type
       if (formData.locationType === 'specific' && formData.wazeUrl) {
-        businessData.wazeUrl = formData.wazeUrl;
+        updateData.wazeUrl = formData.wazeUrl;
       }
       
       if (formData.locationType === 'service-areas' && formData.serviceAreas?.length > 0) {
-        businessData.serviceAreas = formData.serviceAreas;
+        updateData.serviceAreas = formData.serviceAreas;
       }
 
-      const businessId = await businessService.createBusiness(businessData);
+      await businessService.update(business.id, updateData);
 
-      // Update user's businessId field if user exists
-      if (user) {
-        try {
-          const userService = new (await import('@/services/UserService')).UserService();
-          await userService.updateUserProfile(user.id, { businessId });
-        } catch (error) {
-          console.error('Failed to link business to user profile:', error);
-          // Don't fail the whole operation if user update fails
-        }
-      }
-
-      // Success - redirect to business page or success page
-      alert('העסק נוצר בהצלחה!');
-      
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        category: '',
-        phone: '',
-        email: '',
-        website: '',
-        locationType: 'specific',
-        wazeUrl: '',
-        serviceAreas: [],
-        logoUrl: '',
-        imageUrls: [],
-        openHours: {
-          sunday: { open: '09:00', close: '17:00', closed: false },
-          monday: { open: '09:00', close: '17:00', closed: false },
-          tuesday: { open: '09:00', close: '17:00', closed: false },
-          wednesday: { open: '09:00', close: '17:00', closed: false },
-          thursday: { open: '09:00', close: '17:00', closed: false },
-          friday: { open: '09:00', close: '14:00', closed: false },
-          saturday: { open: '00:00', close: '00:00', closed: true }
-        },
-        serviceTags: [],
-        tags: []
-      });
-      setCurrentStep(1);
+      // Success - redirect to business page
+      alert('העסק עודכן בהצלחה!');
+      router.push(`/businesses/${business.id}`);
       
     } catch (error: any) {
-      console.error('Error creating business:', error);
+      console.error('Error updating business:', error);
       setErrors(prev => ({ 
         ...prev, 
-        submit: error.message || 'שגיאה ביצירת העסק. נסה שוב.' 
+        submit: error.message || 'שגיאה בעדכון העסק. נסה שוב.' 
       }));
     } finally {
-      setUploadingImages(false);
+      setSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">טוען פרטי עסק...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errors.load) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">{errors.load}</h1>
+          <Link href="/profile">
+            <Button variant="primary">
+              חזור לפרופיל
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!business) {
+    return null;
+  }
+
+  // Helper functions for styling (same as add-business)
   const getNameClass = () => {
     return `w-full px-3 py-3 sm:px-4 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base ${errors.name ? 'border-red-500' : 'border-gray-300'}`;
   };
@@ -417,11 +477,6 @@ function AddBusinessPage() {
   const getServiceAreaClass = (area: string) => {
     const isActive = formData.serviceAreas.includes(area);
     return `bubble filter cursor-pointer text-center text-xs sm:text-sm py-2 px-3 ${isActive ? 'active' : ''}`;
-  };
-
-  const getCityClass = (city: string) => {
-    const isActive = formData.serviceAreas.includes(city);
-    return `bubble filter cursor-pointer text-center text-xs sm:text-sm py-2 px-2 sm:px-3 ${isActive ? 'active' : ''}`;
   };
 
   const getServiceClass = (service: string) => {
@@ -454,7 +509,7 @@ function AddBusinessPage() {
           <div className="text-center">
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
               <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 sm:w-8 sm:h-8 text-teal-600" />
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">הוספת עסק חדש</h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">עריכת עסק</h1>
             </div>
             
             <div className="block sm:hidden mb-4">
@@ -500,12 +555,21 @@ function AddBusinessPage() {
               {currentStep === 4 && 'שעות פתיחה ושירותים'}
               {currentStep === 5 && 'בדיקה אחרונה ושמירה'}
             </div>
+
+            <div className="mt-4">
+              <Link href="/profile" className="inline-flex items-center text-teal-600 hover:text-teal-700 text-sm">
+                <FontAwesomeIcon icon={faArrowLeft} className="w-4 h-4 ml-1" />
+                חזור לפרופיל
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Include the same form steps as add-business but starting from formData loaded from business */}
       <div className="px-4 py-4 sm:py-8">
         <Card className="w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+          {/* Step 1 - Basic Details */}
           {currentStep === 1 && (
             <div className="space-y-4 sm:space-y-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">פרטים בסיסיים</h2>
@@ -576,6 +640,7 @@ function AddBusinessPage() {
             </div>
           )}
 
+          {/* Step 2 - Contact & Location */}
           {currentStep === 2 && (
             <div className="space-y-4 sm:space-y-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">פרטי קשר ומיקום</h2>
@@ -749,6 +814,7 @@ function AddBusinessPage() {
             </div>
           )}
 
+          {/* Step 3 - Images & Logo */}
           {currentStep === 3 && (
             <div className="space-y-6 sm:space-y-8">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">תמונות ולוגו</h2>
@@ -868,6 +934,7 @@ function AddBusinessPage() {
             </div>
           )}
 
+          {/* Step 4 - Hours & Services */}
           {currentStep === 4 && (
             <div className="space-y-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">שעות פתיחה ושירותים</h2>
@@ -977,6 +1044,7 @@ function AddBusinessPage() {
             </div>
           )}
 
+          {/* Step 5 - Review */}
           {currentStep === 5 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">בדיקה אחרונה</h2>
@@ -1073,8 +1141,8 @@ function AddBusinessPage() {
                 <div className="flex items-start gap-3">
                   <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-yellow-600 mt-0.5" />
                   <div className="text-sm text-yellow-800">
-                    <p className="font-medium mb-1">לפני השליחה</p>
-                    <p>אנא וודא שכל הפרטים נכונים. לאחר יצירת העסק, ניתן יהיה לערוך אותו בפרופיל שלך.</p>
+                    <p className="font-medium mb-1">לפני השמירה</p>
+                    <p>אנא וודא שכל הפרטים נכונים. השינויים ישמרו ויחליפו את המידע הקיים.</p>
                   </div>
                 </div>
               </div>
@@ -1092,7 +1160,8 @@ function AddBusinessPage() {
               )}
             </div>
           )}
-
+          
+          {/* Navigation Buttons */}
           <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
             {currentStep > 1 && (
               <Button 
@@ -1100,7 +1169,7 @@ function AddBusinessPage() {
                 onClick={prevStep}
                 className="w-full sm:w-auto order-2 sm:order-1"
               >
-                <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2 rotate-180" />
+                <FontAwesomeIcon icon={faArrowLeft} className="w-4 h-4 ml-2" />
                 חזור
               </Button>
             )}
@@ -1113,24 +1182,24 @@ function AddBusinessPage() {
                   className="w-full sm:w-auto"
                 >
                   המשך
-                  <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 mr-2" />
+                  <FontAwesomeIcon icon={faArrowLeft} className="w-4 h-4 mr-2 rotate-180" />
                 </Button>
               ) : (
                 <Button 
                   variant="primary" 
                   onClick={handleSubmit}
-                  disabled={uploadingImages}
+                  disabled={saving}
                   className="w-full sm:w-auto"
                 >
-                  {uploadingImages ? (
+                  {saving ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2"></div>
-                      יוצר עסק...
+                      שומר שינויים...
                     </>
                   ) : (
                     <>
                       <FontAwesomeIcon icon={faCheckCircle} className="w-5 h-5 ml-2" />
-                      צור עסק
+                      שמור שינויים
                     </>
                   )}
                 </Button>
@@ -1143,4 +1212,4 @@ function AddBusinessPage() {
   );
 }
 
-export default withAuth(AddBusinessPage, { requireApproved: true });
+export default withAuth(EditBusinessPage, { requireApproved: true });

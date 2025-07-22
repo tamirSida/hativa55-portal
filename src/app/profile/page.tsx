@@ -258,10 +258,12 @@ function ProfilePage() {
                                   צפייה
                                 </Button>
                               </Link>
-                              <Button variant="outline" size="sm">
-                                <FontAwesomeIcon icon={faEdit} className="w-4 h-4 ml-1" />
-                                עריכה
-                              </Button>
+                              <Link href={`/edit-business/${business.id}`}>
+                                <Button variant="outline" size="sm">
+                                  <FontAwesomeIcon icon={faEdit} className="w-4 h-4 ml-1" />
+                                  עריכה
+                                </Button>
+                              </Link>
                             </div>
                           </div>
                           
