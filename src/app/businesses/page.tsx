@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -14,14 +14,36 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Button, Card } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
+import { BusinessService } from '@/services/BusinessService';
+import { Business } from '@/models/Business';
 
 export default function BusinessesPage() {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const isApproved = isAuthenticated && (isAdmin || (user && user.isApproved()));
+  
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // TODO: Load real businesses from Firestore
-  const businesses: any[] = [];
-  const isLoading = false;
+  useEffect(() => {
+    const loadBusinesses = async () => {
+      if (!isApproved) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const businessService = new BusinessService();
+        const allBusinesses = await businessService.getActiveBusinesses();
+        setBusinesses(allBusinesses);
+      } catch (error) {
+        console.error('Error loading businesses:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadBusinesses();
+  }, [isApproved]);
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -109,7 +131,7 @@ export default function BusinessesPage() {
                       {business.name}
                     </h3>
                     <p className="text-sm text-teal-600 mb-2 font-medium">
-                      {business.category}
+                      {business.metadata?.category || 'עסק'}
                     </p>
                     <p className="text-gray-600 mb-4 line-clamp-2">
                       {business.description}
@@ -118,21 +140,27 @@ export default function BusinessesPage() {
                     <div className="space-y-2">
                       <div className="flex items-center text-sm text-gray-500">
                         <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
-                        {business.city}
+                        {business.wazeUrl ? 'מיקום מדויק' : 
+                         business.serviceAreas ? business.serviceAreas.slice(0, 2).join(', ') : 
+                         'מיקום לא צוין'}
                       </div>
                       
                       {isApproved ? (
                         <div className="space-y-1">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <FontAwesomeIcon icon={faPhone} className="w-4 h-4 ml-2" />
-                            {business.phone}
-                          </div>
-                          <div className="flex items-center text-sm text-gray-500">
-                            <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 ml-2" />
-                            {business.email}
-                          </div>
+                          {business.metadata?.contactInfo?.phone && (
+                            <div className="flex items-center text-sm text-gray-500">
+                              <FontAwesomeIcon icon={faPhone} className="w-4 h-4 ml-2" />
+                              {business.metadata.contactInfo.phone}
+                            </div>
+                          )}
+                          {business.metadata?.contactInfo?.email && (
+                            <div className="flex items-center text-sm text-gray-500">
+                              <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 ml-2" />
+                              {business.metadata.contactInfo.email}
+                            </div>
+                          )}
                           <p className="text-xs text-gray-400 mt-2">
-                            בעלים: {business.ownerName}
+                            בעלים: {business.ownerId}
                           </p>
                         </div>
                       ) : (

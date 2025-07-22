@@ -121,7 +121,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 alt="לוגו הקהילה" 
                 width={32} 
                 height={32} 
-                className="h-8 w-auto"
+                style={{ height: '32px', width: 'auto' }}
               />
               <div className="text-2xl font-bold text-teal-600">
                 קהילה

@@ -10,6 +10,16 @@ export interface IBusiness {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  metadata?: {
+    category?: string;
+    contactInfo?: BusinessContactInfo;
+    images?: {
+      logoUrl?: string;
+      galleryUrls?: string[];
+    };
+    openHours?: {[key: string]: { open: string; close: string; closed: boolean }};
+    locationType?: 'specific' | 'service-areas';
+  };
 }
 
 export interface BusinessContactInfo {
@@ -35,19 +45,31 @@ export class Business implements IBusiness {
   public isActive: boolean;
   public createdAt: Date;
   public updatedAt: Date;
+  public metadata?: {
+    category?: string;
+    contactInfo?: BusinessContactInfo;
+    images?: {
+      logoUrl?: string;
+      galleryUrls?: string[];
+    };
+    openHours?: {[key: string]: { open: string; close: string; closed: boolean }};
+    locationType?: 'specific' | 'service-areas';
+  };
 
   constructor(data: Partial<IBusiness>) {
     this.id = data.id || '';
     this.ownerId = data.ownerId || '';
     this.name = data.name || '';
     this.description = data.description || '';
-    this.wazeUrl = data.wazeUrl;
-    this.serviceAreas = data.serviceAreas;
+    // Only set optional fields if they exist
+    if (data.wazeUrl) this.wazeUrl = data.wazeUrl;
+    if (data.serviceAreas) this.serviceAreas = data.serviceAreas;
     this.serviceTags = data.serviceTags || [];
     this.jobPostings = data.jobPostings || [];
     this.isActive = data.isActive ?? true;
     this.createdAt = data.createdAt || new Date();
     this.updatedAt = data.updatedAt || new Date();
+    if (data.metadata) this.metadata = data.metadata;
   }
 
   public updateLocation(wazeUrl?: string, serviceAreas?: string[]): void {
@@ -104,18 +126,23 @@ export class Business implements IBusiness {
   }
 
   public toFirestore(): Record<string, any> {
-    return {
+    const data: Record<string, any> = {
       ownerId: this.ownerId,
       name: this.name,
       description: this.description,
-      wazeUrl: this.wazeUrl,
-      serviceAreas: this.serviceAreas,
       serviceTags: this.serviceTags,
       jobPostings: this.jobPostings,
       isActive: this.isActive,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
+
+    // Only include optional fields if they exist
+    if (this.wazeUrl) data.wazeUrl = this.wazeUrl;
+    if (this.serviceAreas) data.serviceAreas = this.serviceAreas;
+    if (this.metadata) data.metadata = this.metadata;
+
+    return data;
   }
 
   public static fromFirestore(id: string, data: any): Business {

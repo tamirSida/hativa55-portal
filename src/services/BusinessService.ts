@@ -21,7 +21,9 @@ export class BusinessService extends BaseService<Business> {
   }
 
   public async getActiveBusinesses(): Promise<Business[]> {
-    return await this.getByField('isActive', true, [orderBy('name')]);
+    // Temporarily removed orderBy to avoid composite index requirement
+    // TODO: Create composite index and add back orderBy('name')
+    return await this.getByField('isActive', true);
   }
 
   public async getBusinessesByCategory(category: string): Promise<Business[]> {

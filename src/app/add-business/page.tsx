@@ -21,6 +21,7 @@ import {
 import { Button, Card } from '@/components/ui';
 import { israeliCities, SERVICE_AREAS } from '@/utils/israeliData';
 import { ClientCloudinaryService } from '@/services/ClientCloudinaryService';
+import { BusinessService } from '@/services/BusinessService';
 import { useAuth } from '@/hooks/useAuth';
 
 interface BusinessFormData {
@@ -83,7 +84,7 @@ const daysOfWeek = [
 ];
 
 function AddBusinessPage() {
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const cloudinaryService = new ClientCloudinaryService();
   
@@ -148,7 +149,7 @@ function AddBusinessPage() {
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+    if (!file || !firebaseUser) return;
 
     setUploadingLogo(true);
     setErrors(prev => ({ ...prev, logo: '' }));
@@ -169,7 +170,7 @@ function AddBusinessPage() {
 
   const handleImagesUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    if (files.length === 0 || !user) return;
+    if (files.length === 0 || !firebaseUser) return;
 
     const maxBusinessImages = 6;
     
@@ -259,12 +260,95 @@ function AddBusinessPage() {
   };
 
   const handleSubmit = async () => {
-    if (validateStep(currentStep)) {
-      try {
-        console.log('Creating business:', formData);
-      } catch (error) {
-        console.error('Error creating business:', error);
+    if (!validateStep(currentStep) || !firebaseUser) return;
+
+    setUploadingImages(true); // Show loading state
+    
+    try {
+      // Use BusinessService directly from client-side
+      const businessService = new BusinessService();
+      
+      // Create business data for the model
+      const businessData = {
+        ownerId: firebaseUser.uid,
+        name: formData.name,
+        description: formData.description,
+        serviceTags: formData.serviceTags || [],
+        metadata: {
+          category: formData.category,
+          contactInfo: {
+            phone: formData.phone,
+            ...(formData.email && { email: formData.email }),
+            ...(formData.website && { website: formData.website })
+          },
+          images: {
+            ...(formData.logoUrl && { logoUrl: formData.logoUrl }),
+            galleryUrls: formData.imageUrls || []
+          },
+          openHours: formData.openHours || {},
+          locationType: formData.locationType
+        }
+      };
+
+      // Add location data based on type
+      if (formData.locationType === 'specific' && formData.wazeUrl) {
+        businessData.wazeUrl = formData.wazeUrl;
       }
+      
+      if (formData.locationType === 'service-areas' && formData.serviceAreas?.length > 0) {
+        businessData.serviceAreas = formData.serviceAreas;
+      }
+
+      const businessId = await businessService.createBusiness(businessData);
+
+      // Update user's businessId field if user exists
+      if (user) {
+        try {
+          const userService = new (await import('@/services/UserService')).UserService();
+          await userService.updateUserProfile(user.id, { businessId });
+        } catch (error) {
+          console.error('Failed to link business to user profile:', error);
+          // Don't fail the whole operation if user update fails
+        }
+      }
+
+      // Success - redirect to business page or success page
+      alert('העסק נוצר בהצלחה!');
+      
+      // Reset form
+      setFormData({
+        name: '',
+        description: '',
+        category: '',
+        phone: '',
+        email: '',
+        website: '',
+        locationType: 'specific',
+        wazeUrl: '',
+        serviceAreas: [],
+        logoUrl: '',
+        imageUrls: [],
+        openHours: {
+          sunday: { open: '09:00', close: '17:00', closed: false },
+          monday: { open: '09:00', close: '17:00', closed: false },
+          tuesday: { open: '09:00', close: '17:00', closed: false },
+          wednesday: { open: '09:00', close: '17:00', closed: false },
+          thursday: { open: '09:00', close: '17:00', closed: false },
+          friday: { open: '09:00', close: '14:00', closed: false },
+          saturday: { open: '00:00', close: '00:00', closed: true }
+        },
+        serviceTags: []
+      });
+      setCurrentStep(1);
+      
+    } catch (error: any) {
+      console.error('Error creating business:', error);
+      setErrors(prev => ({ 
+        ...prev, 
+        submit: error.message || 'שגיאה ביצירת העסק. נסה שוב.' 
+      }));
+    } finally {
+      setUploadingImages(false);
     }
   };
 
@@ -579,45 +663,23 @@ function AddBusinessPage() {
                   </label>
                   <p className="text-sm text-gray-600 mb-4">בחר את האזורים בהם אתה מספק שירות</p>
                   
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">אזורים כלליים</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {SERVICE_AREAS.slice(0, 10).map((area) => (
-                          <label
-                            key={area}
-                            className={getServiceAreaClass(area)}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.serviceAreas.includes(area)}
-                              onChange={() => handleServiceAreaToggle(area)}
-                              className="sr-only"
-                            />
-                            {area}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">עיירות ספציפיות</h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {israeliCities.slice(0, 16).map((city) => (
-                          <label
-                            key={city}
-                            className={getCityClass(city)}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.serviceAreas.includes(city)}
-                              onChange={() => handleServiceAreaToggle(city)}
-                              className="sr-only"
-                            />
-                            {city}
-                          </label>
-                        ))}
-                      </div>
+                  <div>
+                    <h4 className="font-medium text-gray-800 mb-3 text-sm sm:text-base">אזורים כלליים</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {SERVICE_AREAS.map((area) => (
+                        <label
+                          key={area}
+                          className={getServiceAreaClass(area)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.serviceAreas.includes(area)}
+                            onChange={() => handleServiceAreaToggle(area)}
+                            className="sr-only"
+                          />
+                          {area}
+                        </label>
+                      ))}
                     </div>
                   </div>
 
@@ -921,6 +983,18 @@ function AddBusinessPage() {
                   </div>
                 </div>
               </div>
+
+              {errors.submit && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="w-5 h-5 text-red-600 mt-0.5" />
+                    <div className="text-sm text-red-800">
+                      <p className="font-medium mb-1">שגיאה</p>
+                      <p>{errors.submit}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -950,10 +1024,20 @@ function AddBusinessPage() {
                 <Button 
                   variant="primary" 
                   onClick={handleSubmit}
+                  disabled={uploadingImages}
                   className="w-full sm:w-auto"
                 >
-                  <FontAwesomeIcon icon={faCheckCircle} className="w-5 h-5 ml-2" />
-                  צור עסק
+                  {uploadingImages ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white ml-2"></div>
+                      יוצר עסק...
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faCheckCircle} className="w-5 h-5 ml-2" />
+                      צור עסק
+                    </>
+                  )}
                 </Button>
               )}
             </div>

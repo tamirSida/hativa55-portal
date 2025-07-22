@@ -58,10 +58,7 @@ export class ClientCloudinaryService {
     formData.append('folder', folder);
     formData.append('resource_type', resourceType);
 
-    // Add transformation for optimization
-    if (resourceType === 'image') {
-      formData.append('transformation', 'w_800,h_600,c_limit,q_auto,f_auto');
-    }
+    // Note: Transformations are handled by the upload preset for unsigned uploads
 
     try {
       const response = await fetch(

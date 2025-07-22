@@ -105,9 +105,15 @@ service cloud.firestore {
     
     // Businesses collection
     match /businesses/{businessId} {
-      // Business owners can read/write their own business
-      allow read, write: if isAuthenticated() && 
-                            resource.data.ownerId == request.auth.uid;
+      // Approved users can create businesses they own
+      allow create: if isAuthenticated() && 
+                       exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved" &&
+                       request.resource.data.ownerId == request.auth.uid;
+      
+      // Business owners can read/update/delete their own business
+      allow read, update, delete: if isAuthenticated() && 
+                                     resource.data.ownerId == request.auth.uid;
       
       // Approved users can read active businesses
       allow read: if isAuthenticated() &&
