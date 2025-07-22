@@ -6,12 +6,10 @@ import { SearchBar, QuickSearch } from '@/components/common';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBuilding, faBriefcase, faUsers, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { Button, Card } from '@/components/ui';
-import { useAuthContext } from '@/contexts/AuthContext';
-import { useAuthModal } from '@/hooks/useAuthModal';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function HomePage() {
-  const { isAuthenticated } = useAuthContext();
-  const { openAuthModal } = useAuthModal();
+  const { isAuthenticated, isAdmin } = useAuth();
   
   const handleSearch = (query: string) => {
     console.log('Search:', query);
@@ -147,6 +145,8 @@ export default function HomePage() {
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
             הצטרף לקהילה שלנו וגלה הזדמנויות חדשות, צור קשרים מקצועיים ותרום לקהילה
           </p>
+          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
               <Button

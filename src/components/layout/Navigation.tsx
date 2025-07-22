@@ -15,10 +15,11 @@ import {
   faTimes,
   faSignInAlt,
   faSignOutAlt,
-  faUserPlus
+  faUserPlus,
+  faCog
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NavigationProps {
   className?: string;
@@ -30,7 +31,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenAuth 
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, firebaseUser, isAdmin, isAuthenticated, logout } = useAuthContext();
+  const { user, firebaseUser, isAdmin, isAuthenticated, logout } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -80,12 +81,22 @@ export const Navigation: React.FC<NavigationProps> = ({
       label: 'הפרופיל שלי',
       icon: faUser,
       requireAuth: true
+    },
+    {
+      href: '/admin/dashboard',
+      label: 'ממשק ניהול',
+      icon: faCog,
+      requireAuth: true,
+      adminOnly: true
     }
   ];
 
-  const visibleItems = navigationItems.filter(item => 
-    !item.requireAuth || (item.requireAuth && isAuthenticated && (user?.isApproved() || isAdmin))
-  );
+  const visibleItems = navigationItems.filter(item => {
+    if (!item.requireAuth) return true;
+    if (!isAuthenticated) return false;
+    if (item.adminOnly) return isAdmin;
+    return user?.isApproved() || isAdmin;
+  });
 
   return (
     <nav className={`bg-white border-b border-gray-200 shadow-sm ${className}`}>
