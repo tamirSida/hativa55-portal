@@ -12,10 +12,12 @@ import {
 import { auth } from '@/lib/firebase';
 import { User } from '@/models/User';
 import { UserService } from '@/services/UserService';
+import { AdminService } from '@/services/AdminService';
 
 interface AuthState {
   user: User | null;
   firebaseUser: FirebaseUser | null;
+  isAdmin: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -38,41 +40,67 @@ export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     firebaseUser: null,
+    isAdmin: false,
     loading: true,
     error: null
   });
 
   const userService = new UserService();
+  const adminService = new AdminService();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          let user = await userService.getUserByEmail(firebaseUser.email!);
+          // First check if user is an admin
+          const isAdmin = await adminService.getAdminByEmail(firebaseUser.email!);
           
-          if (!user) {
-            const userId = await userService.createUser({
-              email: firebaseUser.email!,
-              name: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
-              identityId: '', // This should not happen in normal flow
-              contactInfo: {},
-              tags: { canOffer: [], lookingFor: [], interests: [] },
-              businesses: []
+          if (isAdmin) {
+            // Admin user - don't create/load User document
+            setAuthState({
+              user: null,
+              firebaseUser,
+              isAdmin: true,
+              loading: false,
+              error: null
             });
+          } else {
+            // Regular user - handle User document
+            let user = await userService.getUserByEmail(firebaseUser.email!);
             
-            user = await userService.getById(userId);
-          }
+            if (!user) {
+              // Only create User document for non-admin users
+              const userId = await userService.createUser({
+                email: firebaseUser.email!,
+                name: firebaseUser.displayName || firebaseUser.email!.split('@')[0],
+                identityId: '', // This should not happen in normal flow
+                phone: '',
+                city: '',
+                gdud: '',
+                bio: '',
+                hobbyTags: [],
+                mentorTags: [],
+                businessId: '',
+                educationIds: []
+              });
+              
+              user = await userService.getById(userId);
+            }
 
-          setAuthState({
-            user,
-            firebaseUser,
-            loading: false,
-            error: null
-          });
+            setAuthState({
+              user,
+              firebaseUser,
+              isAdmin: false,
+              loading: false,
+              error: null
+            });
+          }
         } catch (error) {
+          console.error('Auth state change error:', error);
           setAuthState({
             user: null,
             firebaseUser: null,
+            isAdmin: false,
             loading: false,
             error: `Failed to load user profile: ${error}`
           });
@@ -81,6 +109,7 @@ export const useAuth = () => {
         setAuthState({
           user: null,
           firebaseUser: null,
+          isAdmin: false,
           loading: false,
           error: null
         });
@@ -203,9 +232,10 @@ export const useAuth = () => {
   return {
     user: authState.user,
     firebaseUser: authState.firebaseUser,
+    isAdmin: authState.isAdmin,
     loading: authState.loading,
     error: authState.error,
-    isAuthenticated: !!authState.user,
+    isAuthenticated: !!authState.firebaseUser, // Changed to check Firebase auth, not User document
     login,
     register,
     logout,

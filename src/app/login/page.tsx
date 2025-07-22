@@ -32,7 +32,7 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
     try {
-      await login(formData.email, formData.password);
+      await login({ email: formData.email, password: formData.password });
       router.push('/'); // Redirect to homepage on success
     } catch (err) {
       // Error is handled by the context

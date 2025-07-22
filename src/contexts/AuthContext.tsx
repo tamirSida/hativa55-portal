@@ -8,6 +8,7 @@ import { User as FirebaseUser } from 'firebase/auth';
 interface AuthContextType {
   user: User | null;
   firebaseUser: FirebaseUser | null;
+  isAdmin: boolean;
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;

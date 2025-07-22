@@ -30,7 +30,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenAuth 
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuthContext();
+  const { user, firebaseUser, isAdmin, isAuthenticated, logout } = useAuthContext();
 
   const handleLogout = async () => {
     try {
@@ -84,7 +84,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   ];
 
   const visibleItems = navigationItems.filter(item => 
-    !item.requireAuth || (item.requireAuth && isAuthenticated && user?.isApproved())
+    !item.requireAuth || (item.requireAuth && isAuthenticated && (user?.isApproved() || isAdmin))
   );
 
   return (
@@ -136,10 +136,10 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-4">
-            {isAuthenticated && user ? (
+            {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">
-                  שלום, {user.name}
+                  שלום, {user?.name || firebaseUser?.displayName || firebaseUser?.email}
                 </span>
                 <Button
                   variant="outline"
@@ -176,9 +176,9 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           {/* Mobile Auth Buttons - Left Side */}
           <div className="md:hidden flex items-center gap-2">
-            {isAuthenticated && user ? (
+            {isAuthenticated ? (
               <span className="text-xs text-gray-600 max-w-20 truncate">
-                {user.name}
+                {user?.name || firebaseUser?.displayName || firebaseUser?.email}
               </span>
             ) : (
               <div className="flex items-center gap-2">

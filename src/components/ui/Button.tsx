@@ -4,7 +4,7 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
@@ -36,7 +36,8 @@ export const Button: React.FC<ButtonProps> = ({
     secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500',
     outline: 'border-2 border-teal-600 text-teal-600 hover:bg-teal-600 hover:text-white focus:ring-teal-500',
     ghost: 'text-teal-600 hover:bg-teal-50 focus:ring-teal-500',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500'
+    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
+    success: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500'
   };
 
   const sizeClasses = {

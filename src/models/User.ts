@@ -200,27 +200,31 @@ export class User implements IUser {
   }
 
   public toFirestore(): Record<string, any> {
-    return {
+    const data: Record<string, any> = {
       email: this.email,
       name: this.name,
       identityId: this.identityId,
-      phone: this.phone,
-      city: this.city,
-      gdud: this.gdud,
-      bio: this.bio,
-      hobbyTags: this.hobbyTags,
-      mentorTags: this.mentorTags,
-      businessId: this.businessId,
-      educationIds: this.educationIds,
+      phone: this.phone || '',
+      city: this.city || '',
+      gdud: this.gdud || '',
+      bio: this.bio || '',
+      hobbyTags: this.hobbyTags || [],
+      mentorTags: this.mentorTags || [],
+      businessId: this.businessId || '',
+      educationIds: this.educationIds || [],
       status: this.status,
-      approvedBy: this.approvedBy,
-      approvedAt: this.approvedAt,
-      rejectedBy: this.rejectedBy,
-      rejectedAt: this.rejectedAt,
-      rejectionReason: this.rejectionReason,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
+
+    // Add optional approval fields only if they exist
+    if (this.approvedBy) data.approvedBy = this.approvedBy;
+    if (this.approvedAt) data.approvedAt = this.approvedAt;
+    if (this.rejectedBy) data.rejectedBy = this.rejectedBy;
+    if (this.rejectedAt) data.rejectedAt = this.rejectedAt;
+    if (this.rejectionReason) data.rejectionReason = this.rejectionReason;
+
+    return data;
   }
 
   public static fromFirestore(id: string, data: any): User {
