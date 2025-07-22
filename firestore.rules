@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for admin checks
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isActive == true;
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == "super_admin" &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isActive == true;
+    }
+    
+    function hasAdminPermission(permission) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isActive == true &&
+        permission in get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.permissions;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Users can create their own profile during registration
+      allow create: if isOwner(userId) && 
+                       resource.data.status == "pending";
+      
+      // Users can update their own profile (but not status/approval fields)
+      allow update: if isOwner(userId) && 
+                       !("status" in resource.data.diff(request.resource.data).affectedKeys()) &&
+                       !("approvedBy" in resource.data.diff(request.resource.data).affectedKeys()) &&
+                       !("approvedAt" in resource.data.diff(request.resource.data).affectedKeys()) &&
+                       !("rejectedBy" in resource.data.diff(request.resource.data).affectedKeys()) &&
+                       !("rejectedAt" in resource.data.diff(request.resource.data).affectedKeys());
+      
+      // Admins can read all users
+      allow read: if hasAdminPermission("view_all_users");
+      
+      // Admins can update user status and other admin-only fields
+      allow update: if hasAdminPermission("edit_user");
+      
+      // Admins can delete users
+      allow delete: if hasAdminPermission("delete_user");
+      
+      // Approved users can read other approved users (for networking)
+      allow read: if isAuthenticated() &&
+                     exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved" &&
+                     resource.data.status == "approved";
+    }
+    
+    // Admins collection
+    match /admins/{adminId} {
+      // Only super admins can read admin records
+      allow read: if isSuperAdmin();
+      
+      // Only super admins can create new admins
+      allow create: if isSuperAdmin();
+      
+      // Only super admins can update admin records
+      allow update: if isSuperAdmin();
+      
+      // Only super admins can delete admin records
+      allow delete: if isSuperAdmin();
+      
+      // Special case: allow reading own admin record for permission checks
+      allow read: if isAuthenticated() && adminId == request.auth.uid;
+    }
+    
+    // Businesses collection
+    match /businesses/{businessId} {
+      // Business owners can read/write their own business
+      allow read, write: if isAuthenticated() && 
+                            resource.data.ownerId == request.auth.uid;
+      
+      // Approved users can read active businesses
+      allow read: if isAuthenticated() &&
+                     exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved" &&
+                     resource.data.isActive == true;
+      
+      // Admins can read all businesses
+      allow read: if hasAdminPermission("view_all_businesses");
+      
+      // Admins can update businesses
+      allow update: if hasAdminPermission("edit_business");
+      
+      // Admins can delete businesses
+      allow delete: if hasAdminPermission("delete_business");
+    }
+    
+    // Jobs collection
+    match /jobs/{jobId} {
+      // Job posters can read/write their own jobs
+      allow read, write: if isAuthenticated() && 
+                            resource.data.posterId == request.auth.uid;
+      
+      // Approved users can read active jobs
+      allow read: if isAuthenticated() &&
+                     exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved" &&
+                     resource.data.isActive == true;
+      
+      // Admins can read all jobs
+      allow read: if isAdmin();
+      
+      // Admins can delete jobs
+      allow delete: if isAdmin();
+    }
+    
+    // Education collection  
+    match /education/{educationId} {
+      // Users can read/write their own education records
+      allow read, write: if isAuthenticated() && 
+                            resource.data.userId == request.auth.uid;
+      
+      // Approved users can read education records of other approved users
+      allow read: if isAuthenticated() &&
+                     exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved" &&
+                     exists(/databases/$(database)/documents/users/$(resource.data.userId)) &&
+                     get(/databases/$(database)/documents/users/$(resource.data.userId)).data.status == "approved";
+      
+      // Admins can read all education records
+      allow read: if isAdmin();
+    }
+    
+    // Tags collection
+    match /tags/{tagId} {
+      // Everyone can read tags
+      allow read: if true;
+      
+      // Only admins can manage tags
+      allow write: if hasAdminPermission("manage_tags");
+    }
+    
+    // System collections (for analytics, etc.)
+    match /system/{document} {
+      // Only admins can access system documents
+      allow read, write: if isAdmin();
+    }
+    
+    // Default deny rule
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

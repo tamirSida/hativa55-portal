@@ -194,6 +194,11 @@ export class User implements IUser {
     return this.mentorTags.length > 0;
   }
 
+  public isAdmin(): boolean {
+    // This will be checked via AdminService in auth context
+    return false; // Placeholder - will be overridden by context
+  }
+
   public toFirestore(): Record<string, any> {
     return {
       email: this.email,

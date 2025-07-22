@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Firebase Storage is disabled - using Cloudinary instead
+    // All media uploads are handled through Cloudinary service
+    
+    // Only allow system/admin files if absolutely necessary
+    match /system/{allPaths=**} {
+      // Only admins can access system files
+      allow read, write: if request.auth != null && 
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.isActive == true;
+    }
+    
+    // Default deny rule - all media handled by Cloudinary
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
