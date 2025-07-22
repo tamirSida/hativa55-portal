@@ -6,8 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faBuilding, 
   faMapMarkerAlt, 
-  faPhone, 
-  faEnvelope, 
   faGlobe, 
   faClock,
   faImage,
@@ -19,7 +17,7 @@ import {
   faPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { Button, Card } from '@/components/ui';
-import { israeliCities, SERVICE_AREAS } from '@/utils/israeliData';
+import { SERVICE_AREAS } from '@/utils/israeliData';
 import { ClientCloudinaryService } from '@/services/ClientCloudinaryService';
 import { BusinessService } from '@/services/BusinessService';
 import { useAuth } from '@/hooks/useAuth';

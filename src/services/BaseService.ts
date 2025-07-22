@@ -105,7 +105,7 @@ export abstract class BaseService<T> {
 
   public async getByField(
     fieldName: string, 
-    value: any, 
+    value: unknown, 
     constraints?: QueryConstraint[]
   ): Promise<T[]> {
     try {
@@ -129,7 +129,7 @@ export abstract class BaseService<T> {
   ): Promise<{ documents: T[]; lastDoc: DocumentSnapshot | null }> {
     try {
       const collectionRef = this.getCollection();
-      let queryConstraints = constraints || [];
+      const queryConstraints = constraints || [];
       
       queryConstraints.push(limit(pageSize));
       
@@ -162,7 +162,7 @@ export abstract class BaseService<T> {
     }
   }
 
-  protected prepareDataForFirestore(data: any): any {
+  protected prepareDataForFirestore(data: Record<string, unknown>): Record<string, unknown> {
     const prepared = { ...data };
     
     if (prepared.createdAt instanceof Date) {
@@ -180,5 +180,5 @@ export abstract class BaseService<T> {
     return prepared;
   }
 
-  protected abstract fromFirestore(id: string, data: any): T;
+  protected abstract fromFirestore(id: string, data: Record<string, unknown>): T;
 }

@@ -20,7 +20,9 @@ import { Business } from '@/models/Business';
 import { Button } from '@/components/ui';
 import { getLocationDisplayText, normalizeWazeUrl } from '@/utils/wazeUtils';
 
-interface BusinessPageProps {}
+interface BusinessPageProps {
+  params: { id: string };
+}
 
 const BusinessPage: React.FC<BusinessPageProps> = () => {
   const { id } = useParams();

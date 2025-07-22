@@ -146,8 +146,8 @@ export class Business implements IBusiness {
     this.updatedAt = new Date();
   }
 
-  public toFirestore(): Record<string, any> {
-    const data: Record<string, any> = {
+  public toFirestore(): Record<string, unknown> {
+    const data: Record<string, unknown> = {
       ownerId: this.ownerId,
       ownerName: this.ownerName,
       name: this.name,
@@ -168,7 +168,7 @@ export class Business implements IBusiness {
     return data;
   }
 
-  public static fromFirestore(id: string, data: any): Business {
+  public static fromFirestore(id: string, data: Record<string, unknown>): Business {
     return new Business({
       id,
       ...data,
