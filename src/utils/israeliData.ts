@@ -234,3 +234,12 @@ export const TAG_CATEGORIES = {
     'נדל״ן'
   ]
 };
+
+export const GDUD_OPTIONS = [
+  { value: 'מפח״ט', label: 'מפח״ט' },
+  { value: '66', label: 'גדוד 66' },
+  { value: '71', label: 'גדוד 71' },
+  { value: '28', label: 'גדוד 28' },
+  { value: 'גדס״ר', label: 'גדס״ר' },
+  { value: 'פלת״צ', label: 'פלת״צ' }
+];

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { SearchBar, QuickSearch } from '@/components/common';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBuilding, faBriefcase, faUsers, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
@@ -37,41 +38,41 @@ export default function HomePage() {
       title: 'עסקים בקהילה',
       description: 'מצא עסקים מקומיים ואנשי מקצוע מהקהילה שלך',
       href: '/businesses',
-      color: 'bg-blue-500'
+      color: 'bg-teal-500'
     },
     {
       icon: faBriefcase,
       title: 'דרושים',
       description: 'חפש משרות או פרסם הזדמנויות תעסוקה',
       href: '/jobs',
-      color: 'bg-green-500'
+      color: 'bg-emerald-500'
     },
     {
       icon: faUsers,
       title: 'חנכים ומנטורים',
       description: 'קבל או תן חונכות מקצועית לחברי הקהילה',
       href: '/mentors',
-      color: 'bg-purple-500'
+      color: 'bg-indigo-500'
     },
     {
       icon: faGraduationCap,
       title: 'רשת בוגרים',
       description: 'התחבר לבוגרי האוניברסיטה או יחידה שלך',
       href: '/network',
-      color: 'bg-orange-500'
+      color: 'bg-amber-500'
     }
   ];
 
   return (
     <div className="bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white">
+      <section className="bg-gradient-to-br from-teal-500 to-teal-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
               ברוכים הבאים לקהילה
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
               המקום לחבר בין אנשי מקצוע, עסקים, משרות והזדמנויות בקהילה הישראלית
             </p>
             
@@ -81,7 +82,6 @@ export default function HomePage() {
                 placeholder="חפש עסקים, משרות, חנכים או כישורים..."
                 onSearch={handleSearch}
                 size="lg"
-                className="bg-white rounded-lg shadow-lg"
               />
             </div>
 
@@ -146,13 +146,14 @@ export default function HomePage() {
             הצטרף לקהילה שלנו וגלה הזדמנויות חדשות, צור קשרים מקצועיים ותרום לקהילה
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => openAuthModal('register')}
-            >
-              הרשם עכשיו
-            </Button>
+            <Link href="/register">
+              <Button
+                variant="primary"
+                size="lg"
+              >
+                הרשם עכשיו
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="lg"

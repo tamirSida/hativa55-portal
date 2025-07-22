@@ -45,25 +45,17 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   return (
-    <div className={`relative ${className}`}>
-      <form onSubmit={handleSubmit} className="flex items-center space-x-2 space-x-reverse">
+    <form onSubmit={handleSubmit} className={`flex items-center gap-3 ${className}`}>
         <div className={`relative flex-1 ${sizeClasses[size]}`}>
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-            <FontAwesomeIcon 
-              icon={faSearch} 
-              className="w-5 h-5 text-gray-400"
-            />
-          </div>
-          
           <input
             type="text"
             value={searchQuery}
             onChange={handleChange}
             placeholder={placeholder}
             className={`
-              block w-full pr-10 pl-10 py-0 bg-white border border-gray-300 rounded-lg
-              text-gray-900 placeholder-gray-500
-              focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+              block w-full px-6 py-0 bg-white border border-gray-200 rounded-full
+              text-gray-900 placeholder-gray-500 shadow-sm
+              focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
               transition-all duration-200
               ${sizeClasses[size]}
             `}
@@ -73,22 +65,26 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             <button
               type="button"
               onClick={handleClear}
-              className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 hover:text-gray-600"
+              className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 hover:text-gray-600"
             >
               <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
             </button>
           )}
         </div>
 
-        <Button
+        <button
           type="submit"
-          variant="primary"
-          size={size}
-          icon={faSearch}
-          className="flex-shrink-0"
+          className={`
+            flex-shrink-0 inline-flex items-center justify-center font-medium transition-all duration-200
+            bg-white border-2 border-teal-600 text-teal-600 hover:bg-teal-600 hover:text-white 
+            focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2
+            rounded-full px-8 gap-2
+            ${sizeClasses[size]}
+          `}
         >
+          <FontAwesomeIcon icon={faSearch} className="w-4 h-4" />
           חפש
-        </Button>
+        </button>
 
         {showFilterButton && onFilterToggle && (
           <Button
@@ -102,8 +98,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             סננים
           </Button>
         )}
-      </form>
-    </div>
+    </form>
   );
 };
 

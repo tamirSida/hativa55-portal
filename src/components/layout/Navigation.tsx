@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faHome, 
@@ -85,8 +86,15 @@ export const Navigation: React.FC<NavigationProps> = ({
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center">
-              <div className="text-2xl font-bold text-primary-600">
+            <Link href="/" className="flex items-center gap-3">
+              <Image 
+                src="/logo.png" 
+                alt="לוגו הקהילה" 
+                width={32} 
+                height={32} 
+                className="h-8 w-auto"
+              />
+              <div className="text-2xl font-bold text-teal-600">
                 קהילה
               </div>
             </Link>
@@ -94,7 +102,7 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           {/* Desktop Navigation */}
           <div className="hidden md:block">
-            <div className="flex items-center space-x-8 space-x-reverse">
+            <div className="flex items-center gap-8">
               {visibleItems.map((item) => (
                 <Link
                   key={item.href}
@@ -109,9 +117,9 @@ export const Navigation: React.FC<NavigationProps> = ({
           </div>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4 space-x-reverse">
+          <div className="hidden md:flex items-center gap-4">
             {isAuthenticated && user ? (
-              <div className="flex items-center space-x-4 space-x-reverse">
+              <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-600">
                   שלום, {user.name}
                 </span>
@@ -125,31 +133,33 @@ export const Navigation: React.FC<NavigationProps> = ({
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onOpenAuth?.('login')}
-                  icon={faSignInAlt}
-                >
-                  התחבר
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => onOpenAuth?.('register')}
-                  icon={faUserPlus}
-                >
-                  הרשם
-                </Button>
+              <div className="flex items-center gap-2">
+                <Link href="/login">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    icon={faSignInAlt}
+                  >
+                    התחבר
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon={faUserPlus}
+                  >
+                    הרשם
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
 
           {/* Mobile Auth Buttons & Menu */}
-          <div className="md:hidden flex items-center space-x-2 space-x-reverse">
+          <div className="md:hidden flex items-center gap-2">
             {isAuthenticated && user ? (
-              <div className="flex items-center space-x-2 space-x-reverse">
+              <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-600 max-w-20 truncate">
                   {user.name}
                 </span>
@@ -162,23 +172,25 @@ export const Navigation: React.FC<NavigationProps> = ({
                 />
               </div>
             ) : (
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onOpenAuth?.('login')}
-                  className="text-xs px-2 py-1"
-                >
-                  התחבר
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => onOpenAuth?.('register')}
-                  className="text-xs px-2 py-1"
-                >
-                  הרשם
-                </Button>
+              <div className="flex items-center gap-2">
+                <Link href="/login">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs px-2 py-1"
+                  >
+                    התחבר
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="text-xs px-2 py-1"
+                  >
+                    הרשם
+                  </Button>
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"
