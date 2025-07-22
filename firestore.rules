@@ -73,6 +73,11 @@ service cloud.firestore {
                      exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved" &&
                      resource.data.status == "approved";
+      
+      // Allow approved users to read basic user info for business owner display
+      allow read: if isAuthenticated() &&
+                     exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved";
     }
     
     // Admins collection

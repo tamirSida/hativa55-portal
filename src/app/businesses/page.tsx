@@ -17,16 +17,14 @@ import {
 import { Button, Card } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { BusinessService } from '@/services/BusinessService';
-import { UserService } from '@/services/UserService';
 import { Business } from '@/models/Business';
-import { User } from '@/models/User';
+import { getLocationDisplayText } from '@/utils/wazeUtils';
 
 export default function BusinessesPage() {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const isApproved = isAuthenticated && (isAdmin || (user && user.isApproved()));
   
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [businessOwners, setBusinessOwners] = useState<Map<string, User>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +44,6 @@ export default function BusinessesPage() {
         });
         
         const businessService = new BusinessService();
-        const userService = new UserService();
         let allBusinesses = [];
         
         if (isApproved || isAdmin) {
@@ -60,22 +57,6 @@ export default function BusinessesPage() {
         }
         
         setBusinesses(allBusinesses);
-        
-        // Fetch owner information for each business
-        const ownersMap = new Map<string, User>();
-        const ownerPromises = allBusinesses.map(async (business) => {
-          try {
-            const owner = await userService.getById(business.ownerId);
-            if (owner) {
-              ownersMap.set(business.ownerId, owner);
-            }
-          } catch (error) {
-            console.error(`Error loading owner for business ${business.name}:`, error);
-          }
-        });
-        
-        await Promise.all(ownerPromises);
-        setBusinessOwners(ownersMap);
       } catch (error) {
         console.error('Error loading businesses:', error);
       } finally {
@@ -255,9 +236,7 @@ export default function BusinessesPage() {
                       <div className="space-y-2">
                         <div className="flex items-center text-sm text-gray-500">
                           <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
-                          {business.wazeUrl ? 'מיקום מדויק' : 
-                           business.serviceAreas ? business.serviceAreas.slice(0, 2).join(', ') : 
-                           'מיקום לא צוין'}
+                          {getLocationDisplayText(business.wazeUrl, business.serviceAreas)}
                         </div>
                         
                         {isApproved ? (
@@ -275,7 +254,7 @@ export default function BusinessesPage() {
                               </div>
                             )}
                             <p className="text-xs text-gray-400 mt-2">
-                              בעלים: {businessOwners.get(business.ownerId)?.name || 'לא זמין'}
+                              בעלים: {business.ownerName}
                             </p>
                           </div>
                         ) : (

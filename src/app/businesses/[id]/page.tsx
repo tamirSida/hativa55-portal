@@ -18,6 +18,7 @@ import {
 import { BusinessService } from '@/services/BusinessService';
 import { Business } from '@/models/Business';
 import { Button } from '@/components/ui';
+import { getLocationDisplayText, normalizeWazeUrl } from '@/utils/wazeUtils';
 
 interface BusinessPageProps {}
 
@@ -235,9 +236,9 @@ const BusinessPage: React.FC<BusinessPageProps> = () => {
                   </a>
                 )}
 
-                {business.wazeUrl && (
+                {business.wazeUrl && normalizeWazeUrl(business.wazeUrl) && (
                   <a
-                    href={business.wazeUrl}
+                    href={normalizeWazeUrl(business.wazeUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
@@ -282,20 +283,47 @@ const BusinessPage: React.FC<BusinessPageProps> = () => {
               </div>
             )}
 
-            {/* Service Areas */}
-            {business.serviceAreas && business.serviceAreas.length > 0 && (
+            {/* Location Information */}
+            {(business.wazeUrl || (business.serviceAreas && business.serviceAreas.length > 0)) && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">אזורי שירות</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {business.serviceAreas.map((area, index) => (
-                    <span
-                      key={index}
-                      className="inline-block px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm text-center"
+                <h2 className="text-xl font-bold text-gray-900 mb-4">מיקום ושירות</h2>
+                
+                {business.wazeUrl && normalizeWazeUrl(business.wazeUrl) && (
+                  <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <FontAwesomeIcon icon={faMapMarkerAlt} className="w-5 h-5 text-blue-600 ml-2" />
+                      <h3 className="font-medium text-gray-900">כתובת</h3>
+                    </div>
+                    <p className="text-gray-700 mb-3">
+                      {getLocationDisplayText(business.wazeUrl)}
+                    </p>
+                    <a
+                      href={normalizeWazeUrl(business.wazeUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-blue-600 hover:text-blue-700 text-sm font-medium"
                     >
-                      {area}
-                    </span>
-                  ))}
-                </div>
+                      <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-1" />
+                      נווט עם Waze
+                    </a>
+                  </div>
+                )}
+
+                {business.serviceAreas && business.serviceAreas.length > 0 && (
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-3">אזורי שירות</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {business.serviceAreas.map((area, index) => (
+                        <span
+                          key={index}
+                          className="inline-block px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm text-center"
+                        >
+                          {area}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

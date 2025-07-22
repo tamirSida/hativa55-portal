@@ -1,6 +1,7 @@
 export interface IBusiness {
   id: string;
   ownerId: string;
+  ownerName: string;
   name: string;
   description: string;
   wazeUrl?: string;
@@ -36,6 +37,7 @@ export interface BusinessContactInfo {
 export class Business implements IBusiness {
   public id: string;
   public ownerId: string;
+  public ownerName: string;
   public name: string;
   public description: string;
   public wazeUrl?: string;
@@ -59,6 +61,7 @@ export class Business implements IBusiness {
   constructor(data: Partial<IBusiness>) {
     this.id = data.id || '';
     this.ownerId = data.ownerId || '';
+    this.ownerName = data.ownerName || '';
     this.name = data.name || '';
     this.description = data.description || '';
     // Only set optional fields if they exist
@@ -128,6 +131,7 @@ export class Business implements IBusiness {
   public toFirestore(): Record<string, any> {
     const data: Record<string, any> = {
       ownerId: this.ownerId,
+      ownerName: this.ownerName,
       name: this.name,
       description: this.description,
       serviceTags: this.serviceTags,

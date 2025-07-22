@@ -271,6 +271,7 @@ function AddBusinessPage() {
       // Create business data for the model
       const businessData = {
         ownerId: firebaseUser.uid,
+        ownerName: user?.name || firebaseUser.displayName || 'שם לא זמין',
         name: formData.name,
         description: formData.description,
         serviceTags: formData.serviceTags || [],
