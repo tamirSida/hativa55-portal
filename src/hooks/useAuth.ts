@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -39,6 +40,7 @@ interface RegisterData {
 }
 
 export const useAuth = () => {
+  const router = useRouter();
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     firebaseUser: null,
@@ -54,14 +56,14 @@ export const useAuth = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // First try to check if user is an admin by checking their UID directly
+          // Check if user is an admin
           let isAdmin = false;
+          
           try {
-            const adminDoc = await adminService.getById(firebaseUser.uid);
+            const adminDoc = await adminService.getAdminByUserId(firebaseUser.uid);
             isAdmin = !!adminDoc && adminDoc.isActive;
           } catch (adminError) {
-            // If admin check fails, assume they're not an admin
-            console.log('Admin check failed (user is likely not an admin):', adminError);
+            // User is not an admin, which is normal
             isAdmin = false;
           }
           
@@ -206,6 +208,8 @@ export const useAuth = () => {
   const logout = async (): Promise<void> => {
     try {
       await signOut(auth);
+      // Auto-redirect to homepage after logout
+      router.push('/');
     } catch (error: any) {
       const errorMessage = 'התרחשה שגיאה בעת ההתנתקות';
       setAuthState(prev => ({ ...prev, error: errorMessage }));

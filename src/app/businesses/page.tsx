@@ -180,6 +180,26 @@ export default function BusinessesPage() {
           ))}
         </div>
 
+        {/* Add Business CTA - Only for approved users */}
+        {isApproved && (
+          <div className="text-center mb-12">
+            <div className="bg-white rounded-2xl shadow-sm p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                יש לך עסק? הוסף אותו לקהילה!
+              </h2>
+              <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                הרחב את הרשת המקצועית שלך והגדל את החשיפה של העסק בקהילה שלנו
+              </p>
+              <Link href="/add-business">
+                <Button variant="primary" size="lg">
+                  <FontAwesomeIcon icon={faBuilding} className="w-5 h-5 ml-2" />
+                  הוסף עסק חדש
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Stats Section */}
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">

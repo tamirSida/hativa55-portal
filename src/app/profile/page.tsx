@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { withAuth } from '@/components/auth';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -206,10 +207,12 @@ function ProfilePage() {
                   <FontAwesomeIcon icon={faEdit} className="w-4 h-4 ml-2" />
                   ערוך פרופיל
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 ml-2" />
-                  הוסף עסק
-                </Button>
+                <Link href="/add-business">
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 ml-2" />
+                    הוסף עסק
+                  </Button>
+                </Link>
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <FontAwesomeIcon icon={faGraduationCap} className="w-4 h-4 ml-2" />
                   עדכן השכלה

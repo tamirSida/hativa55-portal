@@ -42,6 +42,20 @@ export class AdminService extends BaseService<Admin> {
     return admins.length > 0 ? admins[0] : null;
   }
 
+  public async getAdminByUserId(userId: string): Promise<Admin | null> {
+    // First try to get by document ID (preferred method)
+    try {
+      const admin = await this.getById(userId);
+      if (admin && admin.isActive) return admin;
+    } catch (error) {
+      // Document doesn't exist with that ID
+    }
+
+    // Fallback: search by userId field
+    const admins = await this.getByField('userId', userId);
+    return admins.length > 0 && admins[0].isActive ? admins[0] : null;
+  }
+
   public async getAllActiveAdmins(): Promise<Admin[]> {
     // Use getAll() and filter in memory to avoid index requirements
     const allAdmins = await this.getAll();

@@ -1,0 +1,163 @@
+/* Easy.co.il inspired styling */
+
+.container {
+  @apply max-w-7xl mx-auto px-4;
+}
+
+.row {
+  @apply flex flex-wrap -mx-2;
+}
+
+.col-xs-12 {
+  @apply w-full px-2;
+}
+
+/* Easy.co.il bubble styling */
+.bubble {
+  @apply inline-block px-4 py-2 rounded-full text-sm font-medium transition-all duration-200;
+}
+
+.bubble.info {
+  @apply bg-white border-2 border-gray-200 text-gray-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700;
+}
+
+.bubble.filter {
+  @apply bg-white border-2 border-gray-200 text-gray-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 cursor-pointer;
+}
+
+.bubble.filter.active,
+.bubble.filter:checked,
+.bubble.filter[aria-checked="true"] {
+  @apply border-teal-500 bg-teal-100 text-teal-800;
+}
+
+/* Easy.co.il search styling */
+.search-box {
+  @apply relative w-full;
+}
+
+.search-box input {
+  @apply w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:ring-0 text-right;
+}
+
+.search-box .search-icon {
+  @apply absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400;
+}
+
+/* Easy.co.il form styling */
+.easy-form {
+  @apply space-y-6;
+}
+
+.easy-form .form-group {
+  @apply space-y-2;
+}
+
+.easy-form .form-label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.easy-form .form-input {
+  @apply w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:ring-0 transition-colors;
+}
+
+.easy-form .form-input:focus {
+  @apply outline-none;
+}
+
+.easy-form .form-select {
+  @apply w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:ring-0 bg-white transition-colors;
+}
+
+.easy-form .form-textarea {
+  @apply w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:ring-0 min-h-[120px] resize-y transition-colors;
+}
+
+/* Easy.co.il button styling */
+.btn-easy {
+  @apply px-6 py-3 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-easy.primary {
+  @apply bg-teal-600 hover:bg-teal-700 text-white focus:ring-teal-500;
+}
+
+.btn-easy.secondary {
+  @apply bg-white border-2 border-gray-300 hover:border-teal-300 hover:bg-teal-50 text-gray-700 hover:text-teal-700 focus:ring-teal-500;
+}
+
+/* Easy.co.il card styling */
+.easy-card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow;
+}
+
+/* Easy.co.il colors matching their brand */
+:root {
+  --easy-primary: #00a1d6;
+  --easy-primary-hover: #0088b8;
+  --easy-secondary: #f8f9fa;
+  --easy-border: #e9ecef;
+  --easy-text: #495057;
+  --easy-text-muted: #6c757d;
+}
+
+.text-easy-primary {
+  color: var(--easy-primary);
+}
+
+.bg-easy-primary {
+  background-color: var(--easy-primary);
+}
+
+.border-easy-primary {
+  border-color: var(--easy-primary);
+}
+
+.hover\:bg-easy-primary:hover {
+  background-color: var(--easy-primary);
+}
+
+.hover\:border-easy-primary:hover {
+  border-color: var(--easy-primary);
+}
+
+.focus\:ring-easy-primary:focus {
+  --tw-ring-color: var(--easy-primary);
+}
+
+/* Easy.co.il specific layout */
+.questions-container {
+  @apply flex flex-wrap gap-2 mb-6;
+}
+
+.list-sidebar-container {
+  @apply w-full lg:w-1/4 mb-6 lg:mb-0;
+}
+
+.list-content-container {
+  @apply w-full lg:w-3/4;
+}
+
+.home-header-container {
+  @apply bg-gradient-to-br from-teal-500 to-teal-600;
+}
+
+.main-header {
+  @apply relative z-10;
+}
+
+.main-header.transparent {
+  @apply bg-transparent;
+}
+
+.header-content {
+  @apply flex items-center justify-between py-4;
+}
+
+.header-right {
+  @apply flex items-center;
+}
+
+.logo {
+  @apply flex items-center;
+}

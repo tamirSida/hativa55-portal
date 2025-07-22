@@ -91,6 +91,16 @@ service cloud.firestore {
       
       // Special case: allow reading own admin record for permission checks
       allow read: if isAuthenticated() && adminId == request.auth.uid;
+      
+      // Allow authenticated users to read admin records to check if they're admins
+      // This is needed for initial admin authentication check
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid && 
+                     resource.data.isActive == true;
+                     
+      // Allow authenticated users to query admin collection to find their admin record
+      // This is needed for the getByField query in AdminService
+      allow list: if isAuthenticated();
     }
     
     // Businesses collection
