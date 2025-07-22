@@ -121,59 +121,61 @@ export default function BusinessesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {businesses.map((business) => (
-              <Card key={business.id} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start gap-4">
-                  <div className="bg-teal-100 p-3 rounded-lg">
-                    <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">
-                      {business.name}
-                    </h3>
-                    <p className="text-sm text-teal-600 mb-2 font-medium">
-                      {business.metadata?.category || 'עסק'}
-                    </p>
-                    <p className="text-gray-600 mb-4 line-clamp-2">
-                      {business.description}
-                    </p>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
-                        {business.wazeUrl ? 'מיקום מדויק' : 
-                         business.serviceAreas ? business.serviceAreas.slice(0, 2).join(', ') : 
-                         'מיקום לא צוין'}
-                      </div>
+              <Link key={business.id} href={`/businesses/${business.id}`}>
+                <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-teal-100 p-3 rounded-lg">
+                      <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2 truncate">
+                        {business.name}
+                      </h3>
+                      <p className="text-sm text-teal-600 mb-2 font-medium">
+                        {business.metadata?.category || 'עסק'}
+                      </p>
+                      <p className="text-gray-600 mb-4 line-clamp-2">
+                        {business.description}
+                      </p>
                       
-                      {isApproved ? (
-                        <div className="space-y-1">
-                          {business.metadata?.contactInfo?.phone && (
-                            <div className="flex items-center text-sm text-gray-500">
-                              <FontAwesomeIcon icon={faPhone} className="w-4 h-4 ml-2" />
-                              {business.metadata.contactInfo.phone}
-                            </div>
-                          )}
-                          {business.metadata?.contactInfo?.email && (
-                            <div className="flex items-center text-sm text-gray-500">
-                              <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 ml-2" />
-                              {business.metadata.contactInfo.email}
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-400 mt-2">
-                            בעלים: {business.ownerId}
-                          </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
+                          {business.wazeUrl ? 'מיקום מדויק' : 
+                           business.serviceAreas ? business.serviceAreas.slice(0, 2).join(', ') : 
+                           'מיקום לא צוין'}
                         </div>
-                      ) : (
-                        <div className="bg-gray-100 p-3 rounded-lg">
-                          <p className="text-xs text-gray-500 text-center">
-                            פרטי קשר זמינים למשתמשים מאושרים בלבד
-                          </p>
-                        </div>
-                      )}
+                        
+                        {isApproved ? (
+                          <div className="space-y-1">
+                            {business.metadata?.contactInfo?.phone && (
+                              <div className="flex items-center text-sm text-gray-500">
+                                <FontAwesomeIcon icon={faPhone} className="w-4 h-4 ml-2" />
+                                {business.metadata.contactInfo.phone}
+                              </div>
+                            )}
+                            {business.metadata?.contactInfo?.email && (
+                              <div className="flex items-center text-sm text-gray-500">
+                                <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 ml-2" />
+                                {business.metadata.contactInfo.email}
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-400 mt-2">
+                              בעלים: {business.ownerId}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="bg-gray-100 p-3 rounded-lg">
+                            <p className="text-xs text-gray-500 text-center">
+                              פרטי קשר זמינים למשתמשים מאושרים בלבד
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
