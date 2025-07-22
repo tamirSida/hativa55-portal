@@ -22,8 +22,28 @@ export function parseWazeUrl(url: string): ParsedWazeLocation | null {
     return null;
   }
 
+  console.log('parseWazeUrl called with:', url);
+
   try {
-    const urlObj = new URL(url);
+    // Check if the input contains Hebrew text with address before the URL
+    // Pattern: "נסיעה עם Waze אל [address]: https://waze.com/..."
+    const hebrewAddressMatch = url.match(/נסיעה עם Waze אל\s+([^:]+):\s*(https?:\/\/[^\s]+)/i);
+    let extractedAddress: string | undefined;
+    
+    if (hebrewAddressMatch) {
+      extractedAddress = hebrewAddressMatch[1].trim();
+      console.log('Extracted address from Hebrew text:', extractedAddress);
+    }
+    
+    // Normalize URL first to handle malformed URLs
+    const normalizedUrl = normalizeWazeUrl(url);
+    if (!normalizedUrl) {
+      console.log('URL normalization failed');
+      return null;
+    }
+    
+    console.log('Normalized URL:', normalizedUrl);
+    const urlObj = new URL(normalizedUrl);
     
     // Handle different Waze URL formats
     if (urlObj.hostname.includes('waze.com')) {
@@ -39,6 +59,7 @@ export function parseWazeUrl(url: string): ParsedWazeLocation | null {
         if (coords.length === 2) {
           lat = parseFloat(coords[0]);
           lng = parseFloat(coords[1]);
+          console.log('Extracted coordinates:', { lat, lng });
         }
       }
       
@@ -46,26 +67,38 @@ export function parseWazeUrl(url: string): ParsedWazeLocation | null {
       let place = params.get('q');
       if (place) {
         place = decodeURIComponent(place);
+        console.log('Extracted place:', place);
       }
       
       // Extract address from path (for live-map URLs)
-      let address: string | undefined;
+      let pathAddress: string | undefined;
       if (urlObj.pathname.includes('/directions/to/')) {
         const pathParts = urlObj.pathname.split('/');
         const toIndex = pathParts.indexOf('to');
         if (toIndex !== -1 && pathParts[toIndex + 1]) {
-          address = decodeURIComponent(pathParts[toIndex + 1]).replace(/-/g, ' ');
+          pathAddress = decodeURIComponent(pathParts[toIndex + 1]).replace(/-/g, ' ');
+          console.log('Extracted address from path:', pathAddress);
         }
       }
       
-      return {
-        address: address || place,
+      // Priority: Hebrew text address > path address > place name
+      const finalAddress = extractedAddress || pathAddress || place;
+      
+      const result = {
+        address: finalAddress,
         lat,
         lng,
         place
       };
+      
+      console.log('Parse result:', result);
+      
+      // Return result even if no specific location data is available
+      // This indicates it's a valid Waze URL, even if it's a short link
+      return result;
     }
     
+    console.log('Not a Waze URL');
     return null;
   } catch (error) {
     console.warn('Failed to parse Waze URL:', error);
@@ -77,6 +110,8 @@ export function parseWazeUrl(url: string): ParsedWazeLocation | null {
  * Get display text for a location based on Waze URL and service areas
  */
 export function getLocationDisplayText(wazeUrl?: string, serviceAreas?: string[]): string {
+  console.log('getLocationDisplayText called with:', { wazeUrl, serviceAreas });
+  
   if (wazeUrl) {
     console.log('Processing Waze URL:', wazeUrl);
     const parsed = parseWazeUrl(wazeUrl);
@@ -95,14 +130,27 @@ export function getLocationDisplayText(wazeUrl?: string, serviceAreas?: string[]
       console.log('Using coordinates fallback');
       return 'מיקום מדויק';
     }
+    
+    // If we have a valid Waze URL (parsed is not null) but no specific location data,
+    // it's likely a short URL - show generic location text
+    if (parsed !== null) {
+      console.log('Valid Waze URL but no specific location data - using generic text');
+      return 'מיקום זמין ב-Waze';
+    }
+    
+    console.log('Waze URL exists but failed to parse');
+  } else {
+    console.log('No Waze URL provided');
   }
   
   if (serviceAreas && serviceAreas.length > 0) {
     console.log('Using service areas:', serviceAreas);
     return serviceAreas.slice(0, 2).join(', ');
+  } else {
+    console.log('No service areas provided');
   }
   
-  console.log('Using fallback text');
+  console.log('Using fallback text - no location data available');
   return 'מיקום לא זמין';
 }
 
@@ -134,6 +182,10 @@ export function normalizeWazeUrl(url: string): string {
 
   // Clean the URL of any extra text
   let cleanUrl = url.trim();
+  
+  // Fix common malformed URLs - handle https:/ (single slash)
+  cleanUrl = cleanUrl.replace(/^https:\//i, 'https://');
+  cleanUrl = cleanUrl.replace(/^http:\//i, 'http://');
   
   // Extract just the Waze URL if there's extra text
   const wazeMatch = cleanUrl.match(/(https?:\/\/(?:www\.)?waze\.com\/[^\s]+)/i);
