@@ -29,11 +29,6 @@ export default function BusinessesPage() {
 
   useEffect(() => {
     const loadBusinesses = async () => {
-      if (!isApproved) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
         console.log('Loading businesses - User status:', { 
           isAuthenticated, 
@@ -44,17 +39,9 @@ export default function BusinessesPage() {
         });
         
         const businessService = new BusinessService();
-        let allBusinesses = [];
-        
-        if (isApproved || isAdmin) {
-          // Approved users get full business list
-          allBusinesses = await businessService.getActiveBusinesses();
-          console.log('Successfully loaded businesses for approved user:', allBusinesses.length);
-        } else {
-          // Unapproved users get limited demo businesses (you could create a separate method for this)
-          console.log('User not approved, showing limited view');
-          allBusinesses = []; // For now, show empty list for unapproved users
-        }
+        // Load businesses for everyone - contact info will be filtered in the UI
+        const allBusinesses = await businessService.getActiveBusinesses();
+        console.log('Successfully loaded businesses:', allBusinesses.length);
         
         setBusinesses(allBusinesses);
       } catch (error) {
@@ -65,7 +52,7 @@ export default function BusinessesPage() {
     };
 
     loadBusinesses();
-  }, [isApproved]);
+  }, [isAuthenticated, isApproved, isAdmin]);
 
   const getBusinessStatus = (business: Business) => {
     const openHours = business.metadata?.openHours;
@@ -128,10 +115,7 @@ export default function BusinessesPage() {
             עסקים מהקהילה
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            {isApproved 
-              ? "גלה עסקים מקומיים מחברי הקהילה שלנו, צור קשר ותמוך בעסקים קטנים"
-              : "הכר עסקים נבחרים מהקהילה שלנו - הצטרף לקבלת גישה מלאה"
-            }
+            גלה עסקים מקומיים מחברי הקהילה שלנו, צור קשר ותמוך בעסקים קטנים
           </p>
         </div>
 
@@ -143,13 +127,13 @@ export default function BusinessesPage() {
                 <FontAwesomeIcon icon={faLock} className="w-6 h-6 text-yellow-600 mt-1" />
                 <div>
                   <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-                    תצוגה מוגבלת
+                    פרטי קשר מוגבלים
                   </h3>
                   <p className="text-yellow-700 mb-3">
-                    אתה רואה כעת רק חלק מהעסקים הרשומים בקהילה. 
+                    אתה יכול לראות את כל העסקים, אך פרטי הקשר זמינים רק לחברי הקהילה. 
                     {isAuthenticated 
-                      ? " ברגע שהחשבון יאושר תקבל גישה לכל העסקים ופרטי קשר מלאים."
-                      : " הצטרף לקהילה כדי לראות את כל העסקים ופרטי הקשר."
+                      ? " ברגע שהחשבון יאושר תקבל גישה לפרטי קשר מלאים."
+                      : " הצטרף לקהילה כדי לראות פרטי קשר מלאים."
                     }
                   </p>
                   <div className="flex gap-3">

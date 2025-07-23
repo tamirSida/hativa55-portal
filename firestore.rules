@@ -120,8 +120,8 @@ service cloud.firestore {
       allow read, update, delete: if isAuthenticated() && 
                                      resource.data.ownerId == request.auth.uid;
       
-      // All authenticated users can read businesses (simplified for now)
-      allow read, list: if isAuthenticated();
+      // Allow all users (including unauthenticated) to read active businesses
+      allow read, list: if true;
       
       // Admins can update businesses
       allow update: if hasAdminPermission("edit_business");
