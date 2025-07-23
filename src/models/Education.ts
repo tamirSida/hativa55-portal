@@ -78,23 +78,39 @@ export class Education implements IEducation {
   }
 
   public toFirestore(): Record<string, unknown> {
-    return {
+    const data: Record<string, unknown> = {
       userId: this.userId,
       institutionName: this.institutionName,
       degreeOrCertificate: this.degreeOrCertificate,
-      yearCompleted: this.yearCompleted,
-      yearExpected: this.yearExpected,
       status: this.status,
-      uniJobTitle: this.uniJobTitle,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
+
+    // Only add optional fields if they have values
+    if (this.yearCompleted !== undefined) {
+      data.yearCompleted = this.yearCompleted;
+    }
+    if (this.yearExpected !== undefined) {
+      data.yearExpected = this.yearExpected;
+    }
+    if (this.uniJobTitle !== undefined && this.uniJobTitle !== '') {
+      data.uniJobTitle = this.uniJobTitle;
+    }
+
+    return data;
   }
 
   public static fromFirestore(id: string, data: Record<string, unknown>): Education {
     return new Education({
       id,
-      ...data,
+      userId: data.userId as string,
+      institutionName: data.institutionName as string,
+      degreeOrCertificate: data.degreeOrCertificate as string,
+      status: data.status as EducationStatus,
+      yearCompleted: data.yearCompleted as number | undefined,
+      yearExpected: data.yearExpected as number | undefined,
+      uniJobTitle: data.uniJobTitle as string | undefined,
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate() || new Date(),
     });

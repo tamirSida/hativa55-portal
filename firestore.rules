@@ -151,9 +151,13 @@ service cloud.firestore {
     
     // Education collection  
     match /education/{educationId} {
-      // Users can read/write their own education records
-      allow read, write: if isAuthenticated() && 
-                            resource.data.userId == request.auth.uid;
+      // Users can create their own education records
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can read/update/delete their own education records
+      allow read, update, delete: if isAuthenticated() && 
+                                     resource.data.userId == request.auth.uid;
       
       // Approved users can read education records of other approved users
       allow read: if isAuthenticated() &&

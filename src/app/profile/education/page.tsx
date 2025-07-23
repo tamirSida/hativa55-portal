@@ -46,6 +46,11 @@ function EducationManagementPage() {
     uniJobTitle: ''
   });
 
+  // States for "Other" option handling
+  const [showCustomInstitution, setShowCustomInstitution] = useState(false);
+  const [showCustomDegree, setShowCustomDegree] = useState(false);
+  const [showCustomJob, setShowCustomJob] = useState(false);
+
   const educationService = new EducationService();
   const userService = new UserService();
 
@@ -82,6 +87,9 @@ function EducationManagementPage() {
       yearCompleted: undefined,
       uniJobTitle: ''
     });
+    setShowCustomInstitution(false);
+    setShowCustomDegree(false);
+    setShowCustomJob(false);
     setShowForm(true);
   };
 
@@ -95,6 +103,16 @@ function EducationManagementPage() {
       yearCompleted: education.yearCompleted,
       uniJobTitle: education.uniJobTitle || ''
     });
+    
+    // Check if values are custom (not in predefined lists)
+    const commonInstitutions = EducationManager.getCommonInstitutions();
+    const commonDegrees = EducationManager.getCommonDegrees();
+    const commonJobs = EducationManager.getUniJobs();
+    
+    setShowCustomInstitution(!commonInstitutions.includes(education.institutionName));
+    setShowCustomDegree(!commonDegrees.includes(education.degreeOrCertificate));
+    setShowCustomJob(education.uniJobTitle ? !commonJobs.includes(education.uniJobTitle) : false);
+    
     setShowForm(true);
   };
 
@@ -102,32 +120,58 @@ function EducationManagementPage() {
     e.preventDefault();
     if (!user) return;
 
+    // Validate required fields
+    if (!formData.institutionName.trim() || !formData.degreeOrCertificate.trim()) {
+      alert('אנא מלא את כל השדות הנדרשים');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (editingEducation) {
         // Update existing education
         const updatedEducation = new Education({
           ...editingEducation,
-          ...formData,
+          institutionName: formData.institutionName.trim(),
+          degreeOrCertificate: formData.degreeOrCertificate.trim(),
+          status: formData.status,
+          yearExpected: formData.yearExpected,
+          yearCompleted: formData.yearCompleted,
+          uniJobTitle: formData.uniJobTitle?.trim() || undefined,
           updatedAt: new Date()
         });
         
-        await educationService.update(editingEducation.id, updatedEducation.toFirestore());
+        await educationService.update(editingEducation.id, updatedEducation.toFirestore() as Partial<Education>);
         
         // Update local state
         setEducations(prev => 
           prev.map(edu => edu.id === editingEducation.id ? updatedEducation : edu)
         );
       } else {
-        // Create new education
-        const newEducation = new Education({
-          ...formData,
+        // Create new education - only include defined values
+        const educationData: any = {
           userId: user.id,
+          institutionName: formData.institutionName.trim(),
+          degreeOrCertificate: formData.degreeOrCertificate.trim(),
+          status: formData.status,
           createdAt: new Date(),
           updatedAt: new Date()
-        });
+        };
+
+        // Only add optional fields if they have values
+        if (formData.yearExpected !== undefined) {
+          educationData.yearExpected = formData.yearExpected;
+        }
+        if (formData.yearCompleted !== undefined) {
+          educationData.yearCompleted = formData.yearCompleted;
+        }
+        if (formData.uniJobTitle?.trim()) {
+          educationData.uniJobTitle = formData.uniJobTitle.trim();
+        }
+
+        const newEducation = new Education(educationData);
         
-        const educationId = await educationService.create(newEducation.toFirestore());
+        const educationId = await educationService.create(newEducation.toFirestore() as Omit<Education, 'id'>);
         
         // Add to user's educationIds
         const updatedEducationIds = [...(user.educationIds || []), educationId];
@@ -144,7 +188,9 @@ function EducationManagementPage() {
       setEditingEducation(null);
     } catch (error) {
       console.error('Error saving education:', error);
-      alert('שגיאה בשמירת הנתונים. אנא נסה שוב.');
+      console.error('Form data:', formData);
+      console.error('User:', user);
+      alert(`שגיאה בשמירת הנתונים: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}. אנא נסה שוב.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -255,20 +301,52 @@ function EducationManagementPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     מוסד לימודים *
                   </label>
-                  <input
-                    type="text"
-                    value={formData.institutionName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, institutionName: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="למשל: אוניברסיטת תל אביב"
-                    required
-                    list="institutions"
-                  />
-                  <datalist id="institutions">
-                    {EducationManager.getCommonInstitutions().map(institution => (
-                      <option key={institution} value={institution} />
-                    ))}
-                  </datalist>
+                  {showCustomInstitution ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={formData.institutionName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, institutionName: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="הקלד מוסד לימודים מותאם אישית"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomInstitution(false);
+                          setFormData(prev => ({ ...prev, institutionName: '' }));
+                        }}
+                        className="text-sm text-teal-600 hover:text-teal-700"
+                      >
+                        בחר מהרשימה
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <select
+                        value={formData.institutionName}
+                        onChange={(e) => {
+                          if (e.target.value === 'other') {
+                            setShowCustomInstitution(true);
+                            setFormData(prev => ({ ...prev, institutionName: '' }));
+                          } else {
+                            setFormData(prev => ({ ...prev, institutionName: e.target.value }));
+                          }
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        required
+                      >
+                        <option value="">בחר מוסד לימודים</option>
+                        {EducationManager.getCommonInstitutions().map(institution => (
+                          <option key={institution} value={institution}>
+                            {institution}
+                          </option>
+                        ))}
+                        <option value="other">אחר...</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 {/* Degree */}
@@ -276,20 +354,52 @@ function EducationManagementPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     תואר/תעודה *
                   </label>
-                  <input
-                    type="text"
-                    value={formData.degreeOrCertificate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, degreeOrCertificate: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="למשל: תואר ראשון במדעי המחשב"
-                    required
-                    list="degrees"
-                  />
-                  <datalist id="degrees">
-                    {EducationManager.getCommonDegrees().map(degree => (
-                      <option key={degree} value={degree} />
-                    ))}
-                  </datalist>
+                  {showCustomDegree ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={formData.degreeOrCertificate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, degreeOrCertificate: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="הקלד תואר/תעודה מותאם אישית"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomDegree(false);
+                          setFormData(prev => ({ ...prev, degreeOrCertificate: '' }));
+                        }}
+                        className="text-sm text-teal-600 hover:text-teal-700"
+                      >
+                        בחר מהרשימה
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <select
+                        value={formData.degreeOrCertificate}
+                        onChange={(e) => {
+                          if (e.target.value === 'other') {
+                            setShowCustomDegree(true);
+                            setFormData(prev => ({ ...prev, degreeOrCertificate: '' }));
+                          } else {
+                            setFormData(prev => ({ ...prev, degreeOrCertificate: e.target.value }));
+                          }
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        required
+                      >
+                        <option value="">בחר תואר/תעודה</option>
+                        {EducationManager.getCommonDegrees().map(degree => (
+                          <option key={degree} value={degree}>
+                            {degree}
+                          </option>
+                        ))}
+                        <option value="other">אחר...</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 {/* Status */}
@@ -361,19 +471,50 @@ function EducationManagementPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     תפקיד באוניברסיטה (אופציונלי)
                   </label>
-                  <input
-                    type="text"
-                    value={formData.uniJobTitle}
-                    onChange={(e) => setFormData(prev => ({ ...prev, uniJobTitle: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="למשל: מתרגל, חבר אגודת סטודנטים"
-                    list="uni-jobs"
-                  />
-                  <datalist id="uni-jobs">
-                    {EducationManager.getUniJobs().map(job => (
-                      <option key={job} value={job} />
-                    ))}
-                  </datalist>
+                  {showCustomJob ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={formData.uniJobTitle}
+                        onChange={(e) => setFormData(prev => ({ ...prev, uniJobTitle: e.target.value }))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        placeholder="הקלד תפקיד מותאם אישית"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomJob(false);
+                          setFormData(prev => ({ ...prev, uniJobTitle: '' }));
+                        }}
+                        className="text-sm text-teal-600 hover:text-teal-700"
+                      >
+                        בחר מהרשימה
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <select
+                        value={formData.uniJobTitle}
+                        onChange={(e) => {
+                          if (e.target.value === 'other') {
+                            setShowCustomJob(true);
+                            setFormData(prev => ({ ...prev, uniJobTitle: '' }));
+                          } else {
+                            setFormData(prev => ({ ...prev, uniJobTitle: e.target.value }));
+                          }
+                        }}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      >
+                        <option value="">בחר תפקיד (אופציונלי)</option>
+                        {EducationManager.getUniJobs().map(job => (
+                          <option key={job} value={job}>
+                            {job}
+                          </option>
+                        ))}
+                        <option value="other">אחר...</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -399,6 +540,9 @@ function EducationManagementPage() {
                   onClick={() => {
                     setShowForm(false);
                     setEditingEducation(null);
+                    setShowCustomInstitution(false);
+                    setShowCustomDegree(false);
+                    setShowCustomJob(false);
                   }}
                   disabled={isSubmitting}
                 >
