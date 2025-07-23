@@ -13,7 +13,9 @@ import {
   faEnvelope,
   faBuilding,
   faGraduationCap,
-  faTags
+  faTags,
+  faTrash,
+  faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
 import { Card, Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,6 +26,9 @@ function ProfilePage() {
   const { user, firebaseUser } = useAuth();
   const [userBusinesses, setUserBusinesses] = useState<Business[]>([]);
   const [loadingBusinesses, setLoadingBusinesses] = useState(false);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const loadUserBusinesses = async () => {
@@ -44,6 +49,26 @@ function ProfilePage() {
 
     loadUserBusinesses();
   }, [firebaseUser]);
+
+  const handleDeleteBusiness = async () => {
+    if (!selectedBusiness) return;
+
+    setIsDeleting(true);
+    try {
+      const businessService = new BusinessService();
+      await businessService.deleteBusiness(selectedBusiness.id);
+      
+      // Remove from local state
+      setUserBusinesses(userBusinesses.filter(b => b.id !== selectedBusiness.id));
+      setShowDeleteModal(false);
+      setSelectedBusiness(null);
+    } catch (error) {
+      console.error('Failed to delete business:', error);
+      alert('שגיאה במחיקת העסק. נסה שוב.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -264,6 +289,18 @@ function ProfilePage() {
                                   עריכה
                                 </Button>
                               </Link>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedBusiness(business);
+                                  setShowDeleteModal(true);
+                                }}
+                                className="text-red-600 hover:text-red-700 hover:border-red-300"
+                              >
+                                <FontAwesomeIcon icon={faTrash} className="w-4 h-4 ml-1" />
+                                מחק
+                              </Button>
                             </div>
                           </div>
                           
@@ -393,6 +430,51 @@ function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedBusiness && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <FontAwesomeIcon icon={faExclamationTriangle} className="w-6 h-6 text-red-600" />
+              <h3 className="text-lg font-semibold text-gray-900">אישור מחיקה</h3>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700 mb-2">
+                האם אתה בטוח שברצונך למחוק את העסק:
+              </p>
+              <p className="font-semibold text-gray-900">
+                "{selectedBusiness.name}"
+              </p>
+              <p className="text-sm text-red-600 mt-2">
+                פעולה זו לא ניתנת לביטול!
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedBusiness(null);
+                }}
+                disabled={isDeleting}
+              >
+                ביטול
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleDeleteBusiness}
+                loading={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? 'מוחק...' : 'מחק'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

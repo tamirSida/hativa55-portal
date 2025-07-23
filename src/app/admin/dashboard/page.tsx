@@ -628,9 +628,18 @@ export default function AdminDashboard() {
             </div>
 
             <Card className="p-6">
-              <div className="text-center text-gray-600">
-                <FontAwesomeIcon icon={faBuilding} className="w-12 h-12 text-gray-400 mb-4" />
-                <p>ממשק ניהול עסקים יתווסף בקרוב...</p>
+              <div className="text-center">
+                <FontAwesomeIcon icon={faBuilding} className="w-12 h-12 text-teal-600 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">ממשק ניהול עסקים</h3>
+                <p className="text-gray-600 mb-6">
+                  צפה וערוך את כל העסקים במערכת, הפעל או השבת עסקים, ומחק עסקים לא רלוונטיים.
+                </p>
+                <a href="/admin/businesses">
+                  <Button variant="primary" size="lg">
+                    <FontAwesomeIcon icon={faBuilding} className="w-5 h-5 ml-2" />
+                    כניסה לניהול עסקים
+                  </Button>
+                </a>
               </div>
             </Card>
           </div>

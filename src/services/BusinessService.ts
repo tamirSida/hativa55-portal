@@ -188,4 +188,21 @@ export class BusinessService extends BaseService<Business> {
       throw new Error(`Failed to get businesses with jobs: ${error}`);
     }
   }
+
+  public async deleteBusiness(businessId: string): Promise<void> {
+    try {
+      await this.delete(businessId);
+    } catch (error) {
+      throw new Error(`Failed to delete business: ${error}`);
+    }
+  }
+
+  public async getAllBusinessesForAdmin(): Promise<Business[]> {
+    try {
+      // Get all businesses, not just active ones, for admin management
+      return await this.getAll();
+    } catch (error) {
+      throw new Error(`Failed to get all businesses: ${error}`);
+    }
+  }
 }
