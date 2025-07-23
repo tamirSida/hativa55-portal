@@ -55,6 +55,21 @@ export default function BusinessMap({
   const [mapCenter, setMapCenter] = useState(center || userLocation || DEFAULT_CENTER);
   const [mapZoom, setMapZoom] = useState(zoom);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [openPopupId, setOpenPopupId] = useState<string | null>(null);
+  const [hoveredBusiness, setHoveredBusiness] = useState<(Business & { distance?: number }) | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Load Leaflet CSS
   useEffect(() => {
@@ -159,6 +174,14 @@ export default function BusinessMap({
         className="rounded-lg"
         zoomControl={false} // We'll add custom controls
         attributionControl={false} // Clean up for mobile
+        eventHandlers={{
+          click: () => {
+            // Close any open popups when clicking on the map
+            if (isMobile) {
+              setOpenPopupId(null);
+            }
+          }
+        }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -201,19 +224,64 @@ export default function BusinessMap({
             return null;
           }
 
+          const handleMarkerClick = (e: any) => {
+            if (isMobile) {
+              // Mobile: First tap shows popup, second tap goes to business
+              if (openPopupId === business.id) {
+                // Popup is already open, navigate to business
+                window.open(`/businesses/${business.id}`, '_blank');
+              } else {
+                // Show popup
+                setOpenPopupId(business.id);
+              }
+            } else {
+              // Desktop: Click goes directly to business
+              window.open(`/businesses/${business.id}`, '_blank');
+            }
+          };
+
+          const handleMarkerMouseOver = (e: any) => {
+            if (!isMobile) {
+              // Desktop: Show hover card
+              const map = e.target._map;
+              const containerPoint = map.latLngToContainerPoint(e.latlng);
+              setHoverPosition({ 
+                x: containerPoint.x, 
+                y: containerPoint.y 
+              });
+              setHoveredBusiness(business);
+            }
+          };
+
+          const handleMarkerMouseOut = () => {
+            if (!isMobile) {
+              // Desktop: Hide hover card with small delay
+              setTimeout(() => {
+                setHoveredBusiness(null);
+                setHoverPosition(null);
+              }, 150);
+            }
+          };
+
           return (
             <Marker
               key={business.id}
               position={[locationData.coordinates.lat, locationData.coordinates.lng]}
               icon={businessIcon}
               eventHandlers={{
-                click: () => onBusinessClick?.(business)
+                click: handleMarkerClick,
+                mouseover: handleMarkerMouseOver,
+                mouseout: handleMarkerMouseOut
               }}
             >
-              <Popup
-                closeButton={true}
-                className="custom-popup"
-              >
+              {openPopupId === business.id && (
+                <Popup
+                  closeButton={true}
+                  className="custom-popup"
+                  eventHandlers={{
+                    remove: () => setOpenPopupId(null)
+                  }}
+                >
                 <div className="w-full max-w-[280px] sm:max-w-xs">
                   <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
                     {business.metadata?.images?.logoUrl && (
@@ -248,7 +316,10 @@ export default function BusinessMap({
 
                   <div className="flex gap-1.5 sm:gap-2">
                     <button
-                      onClick={() => window.open(`/businesses/${business.id}`, '_blank')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(`/businesses/${business.id}`, '_blank');
+                      }}
                       className="flex-1 px-2 sm:px-3 py-1.5 sm:py-1 bg-teal-500 text-white text-xs rounded-md hover:bg-teal-600 transition-colors touch-manipulation"
                     >
                       פרטים
@@ -256,7 +327,10 @@ export default function BusinessMap({
                     
                     {business.wazeUrl && (
                       <button
-                        onClick={() => window.open(business.wazeUrl, '_blank')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(business.wazeUrl, '_blank');
+                        }}
                         className="flex-1 px-2 sm:px-3 py-1.5 sm:py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-colors touch-manipulation"
                       >
                         נווט
@@ -264,7 +338,8 @@ export default function BusinessMap({
                     )}
                   </div>
                 </div>
-              </Popup>
+                </Popup>
+              )}
             </Marker>
           );
         })}
@@ -306,6 +381,63 @@ export default function BusinessMap({
           © OpenStreetMap
         </a>
       </div>
+
+      {/* Desktop Hover Card */}
+      {hoveredBusiness && hoverPosition && !isMobile && (
+        <div 
+          className="absolute z-[2000] pointer-events-none"
+          style={{
+            left: hoverPosition.x + 10,
+            top: hoverPosition.y - 10,
+            transform: 'translateY(-100%)'
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl border p-3 max-w-xs">
+            <div className="flex items-start gap-3 mb-2">
+              {hoveredBusiness.metadata?.images?.logoUrl && (
+                <img
+                  src={hoveredBusiness.metadata.images.logoUrl}
+                  alt={`לוגו ${hoveredBusiness.name}`}
+                  className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 mb-1 text-sm line-clamp-2">
+                  {hoveredBusiness.name}
+                </h3>
+                <p className="text-xs text-teal-600 font-medium">
+                  {hoveredBusiness.metadata?.category || 'עסק'}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+              {hoveredBusiness.description}
+            </p>
+
+            {hoveredBusiness.distance !== undefined && (
+              <p className="text-xs text-gray-500 mb-2">
+                מרחק: {hoveredBusiness.distance < 1 
+                  ? `${Math.round(hoveredBusiness.distance * 1000)}מ'` 
+                  : `${hoveredBusiness.distance.toFixed(1)}ק"מ`
+                }
+              </p>
+            )}
+
+            <div className="flex items-center text-xs text-gray-500">
+              <span className="bg-teal-50 text-teal-700 px-2 py-1 rounded text-xs">
+                לחץ לפרטים
+              </span>
+            </div>
+
+            {/* Arrow pointer */}
+            <div 
+              className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white"
+              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
+            ></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

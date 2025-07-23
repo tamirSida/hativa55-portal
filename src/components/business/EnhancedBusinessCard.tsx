@@ -13,7 +13,6 @@ import {
   faRoute,
   faExternalLinkAlt
 } from '@fortawesome/free-solid-svg-icons';
-import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { Card } from '@/components/ui';
 import { Business } from '@/models/Business';
 import { getLocationDisplayText } from '@/utils/wazeUtils';
@@ -81,10 +80,6 @@ export default function EnhancedBusinessCard({
     }
   };
 
-  // Format phone number for WhatsApp
-  const formatPhoneForWhatsApp = (phone: string) => {
-    return phone.replace(/[^\d]/g, '').replace(/^0/, '972');
-  };
 
   const status = getBusinessStatus(business);
   const sizeClasses = {
@@ -219,19 +214,6 @@ export default function EnhancedBusinessCard({
                     <FontAwesomeIcon icon={faPhone} className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   </button>
 
-                  {/* WhatsApp */}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const whatsappPhone = formatPhoneForWhatsApp(business.metadata!.contactInfo!.phone!);
-                      window.open(`https://wa.me/${whatsappPhone}`, '_blank');
-                    }}
-                    className="p-1.5 sm:p-2 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-colors touch-manipulation"
-                    title="WhatsApp"
-                  >
-                    <FontAwesomeIcon icon={faWhatsapp} className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                  </button>
                 </>
               )}
 

@@ -4,8 +4,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { Layout } from "@/components/layout";
 
 export const metadata: Metadata = {
-  title: "קהילה | פלטפורמת הקהילה העברית",
-  description: "פלטפורמה לחיבור בין אנשי מקצוע, עסקים, משרות והזדמנויות בקהילה",
+  title: "קהילת משרתי המילואים של חטיבה 55",
+  description: "פלטפורמה לחיבור בין אנשי מקצוע, עסקים, משרות והזדמנויות בין אנשי המילואים של החטיבה",
 };
 
 export default function RootLayout({

@@ -27,14 +27,18 @@ firebase emulators:start                  # Start Firebase emulators for local d
 - **Tailwind CSS** for styling
 - **FontAwesome** for icons
 - **Cloudinary** for image uploads
+- **Leaflet + OpenStreetMap** for interactive maps (free, no API keys)
+- **React-Leaflet** for React map components
 
 ### Key Directories
 - `src/app/` - Next.js app router pages and API routes
 - `src/components/` - Reusable React components
+- `src/components/business/` - Business-specific components (search, map, cards)
 - `src/models/` - TypeScript classes for data models (User, Business, Job, etc.)
 - `src/services/` - Service classes for Firebase operations
 - `src/hooks/` - Custom React hooks (especially useAuth)
-- `src/utils/` - Utility functions
+- `src/utils/` - Utility functions (geocoding, location services, Waze parsing)
+- `src/scripts/` - Administrative scripts for data migration
 
 ### Data Models
 - **User**: Community members with approval status
@@ -79,7 +83,16 @@ Located in `firestore.rules`. Key principles:
 - Some `<img>` tags should use Next.js `<Image>` (warnings only)
 - Unused variables and missing React dependencies (warnings only)
 
-### Recent Changes
+### Recent Major Updates
+
+#### Business Discovery Platform (Latest)
+1. **Advanced Search & Filtering**: Location-based search with "Near Me" functionality
+2. **Interactive Map View**: Leaflet-based map with business markers and popups
+3. **Location Intelligence**: Geocoding system for Waze URLs and Israeli service areas
+4. **Mobile-First Design**: Fully responsive interface optimized for mobile devices
+5. **Enhanced Business Cards**: Quick action buttons (call, email, navigate)
+
+#### Previous Updates
 1. **Firebase Permissions**: Fixed individual business page access for non-owners
 2. **Custom Text Input**: Added free text input for both tags and services in business forms
 3. **Waze URL Parsing**: Enhanced to handle Hebrew text and malformed URLs
@@ -100,13 +113,47 @@ const { user, isAuthenticated, isAdmin, isApproved } = useAuth();
 ```
 
 ### Business Management
-- Add: `/add-business` (5-step form)
-- Edit: `/edit-business/[id]` (5-step form)
-- View: `/businesses/[id]` (individual business page)
-- List: `/businesses` (all businesses with filters)
+- **Add**: `/add-business` (5-step form)
+- **Edit**: `/edit-business/[id]` (5-step form)
+- **View**: `/businesses/[id]` (individual business page)
+- **Discovery**: `/businesses` (advanced search with map/list views)
+
+### Business Discovery Features
+- **Text Search**: Search across names, descriptions, categories, tags
+- **Location Search**: "Near Me" with geolocation + manual address/city input
+- **Distance-Based Results**: Sort by proximity with radius controls (1-50km)
+- **Category & Tag Filtering**: Multi-select filter chips
+- **Map View**: Interactive Leaflet map with hover previews (desktop) and tap interactions (mobile)
+- **Mobile Optimized**: Touch-friendly interface with appropriate interaction patterns
+
+### Location Services
+- **Geocoding**: Free Nominatim (OpenStreetMap) service for address validation
+- **Service Areas**: Comprehensive Israeli cities and regions mapping
+- **Distance Calculations**: Haversine formula for accurate distance measurement
+- **Waze Integration**: Parse Waze URLs to extract addresses and coordinates
 
 ### Image Uploads
 Use `ClientCloudinaryService` for browser-side uploads to Cloudinary.
+
+## Key Components & Utilities
+
+### Business Components
+- **`BusinessSearchFilters`**: Advanced search interface with location, text, and filter controls
+- **`BusinessMap`**: Interactive Leaflet map with business markers and popups
+- **`EnhancedBusinessCard`**: Rich business cards with quick action buttons
+- **Mobile Optimized**: All components responsive with touch-friendly interactions
+
+### Location Utilities
+- **`geocodingUtils.ts`**: Free geocoding service using Nominatim (OpenStreetMap)
+- **`businessLocationEnhancer.ts`**: Israeli service areas mapping and distance calculations
+- **`wazeUtils.ts`**: Parse Waze URLs and extract addresses/coordinates
+
+### Key Features
+- **Desktop Map Interaction**: Hover to preview, click to navigate
+- **Mobile Map Interaction**: Tap to preview, tap again to navigate
+- **Distance-Based Search**: Find businesses within specified radius
+- **Service Areas**: Support for both specific addresses and regional coverage
+- **Rate Limiting**: Respects free geocoding service limits
 
 ## Deployment Notes
 
@@ -120,6 +167,14 @@ Use `ClientCloudinaryService` for browser-side uploads to Cloudinary.
 - Cloudinary credentials
 - Next.js environment settings
 
+## Admin Tools
+
+### Location Enhancement
+- **Admin Page**: `/admin/enhance-locations` (admin only)
+- **Purpose**: Geocode existing businesses to add coordinates for map/distance features
+- **Process**: Parses Waze URLs and maps service areas to center coordinates
+- **Safe**: Can be run multiple times without duplicating data
+
 ## Testing
 Currently no automated tests. Manual testing required for:
 - User registration/approval flow
@@ -127,6 +182,10 @@ Currently no automated tests. Manual testing required for:
 - Firebase permissions
 - Image uploads
 - Waze URL parsing
+- **Location-based search** and distance calculations
+- **Map interactions** (desktop hover vs mobile tap)
+- **Mobile responsiveness** across different screen sizes
+- **Geolocation features** ("Near Me" functionality)
 
 ## Support
 For Firebase permission issues, check Firestore rules and user authentication status.
