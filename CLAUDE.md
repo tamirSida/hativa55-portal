@@ -88,7 +88,14 @@ Located in `firestore.rules`. Key principles:
 
 ### Recent Major Updates
 
-#### Education Management System (Latest)
+#### Registration Flow Improvement (Latest)
+1. **3-Step Registration Process**: Basic info → Location/background → Optional onboarding
+2. **Complete Registration After Step 2**: User account created and pending approval after step 2
+3. **Optional Onboarding Step 3**: Users can choose to add business, education, or skip
+4. **Skip Functionality**: "Skip and fill later" option for immediate access to pending approval
+5. **Seamless Experience**: No forced completion of business/education data during registration
+
+#### Education Management System
 1. **Complete CRUD Operations**: Create, read, update, delete education records with full validation
 2. **Smart Form Design**: Dropdown with "Other" option for custom inputs on Institution, Degree, and Job Title
 3. **Dynamic Input Switching**: Seamless toggle between predefined options and custom text input
@@ -212,7 +219,8 @@ Use `ClientCloudinaryService` for browser-side uploads to Cloudinary.
 
 ## Testing
 Currently no automated tests. Manual testing required for:
-- User registration/approval flow
+- **User registration flow** (3-step process with optional onboarding)
+- User approval flow
 - Business creation/editing
 - Firebase permissions
 - Image uploads
@@ -225,6 +233,7 @@ Currently no automated tests. Manual testing required for:
 - **Navigation integration** (Waze URL parsing and GPS navigation)
 - **Education management** (CRUD operations, form validation, Firestore integration)
 - **Student networking** (profile matching, contact revelation, alumni/student filtering)
+- **Registration onboarding** (skip functionality, optional business/education setup)
 
 ## Support
 For Firebase permission issues, check Firestore rules and user authentication status.

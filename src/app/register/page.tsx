@@ -50,6 +50,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false); // Track if basic registration is complete
   const { register, error, clearError } = useAuth();
   const router = useRouter();
 
@@ -101,8 +102,11 @@ export default function RegisterPage() {
     }
   };
 
-  const nextStep = () => {
-    if (validateStep(currentStep) && currentStep < 3) {
+  const nextStep = async () => {
+    if (currentStep === 2 && validateStep(2) && !isRegistered) {
+      // Complete registration after step 2
+      await handleBasicRegistration();
+    } else if (validateStep(currentStep) && currentStep < 3) {
       clearError(); // Clear any existing errors when moving to next step
       setCurrentStep(currentStep + 1);
     }
@@ -115,10 +119,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateStep(3)) return;
-
+  const handleBasicRegistration = async () => {
     setIsSubmitting(true);
     try {
       await register({
@@ -129,12 +130,45 @@ export default function RegisterPage() {
         phone: formData.phone,
         city: formData.city,
         gdud: formData.gdud,
-        bio: formData.hasBusiness ? `עסק: ${formData.businessName} - ${formData.businessDescription}` : 
-             formData.hasEducation ? `לימודים: ${formData.degreeOrCertificate} ב${formData.institutionName}` : ''
+        bio: ''
       });
-      router.push('/pending-approval');
+      setIsRegistered(true);
+      setCurrentStep(3); // Move to onboarding step
     } catch (err) {
       // Error handled by context
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleSkipOnboarding = () => {
+    router.push('/pending-approval');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateStep(3)) return;
+
+    setIsSubmitting(true);
+    try {
+      // Handle business/education creation here
+      // This will be implemented with the actual business/education creation logic
+      let bio = '';
+      if (formData.hasBusiness) {
+        bio = `עסק: ${formData.businessName} - ${formData.businessDescription}`;
+      } else if (formData.hasEducation) {
+        bio = `לימודים: ${formData.degreeOrCertificate} ב${formData.institutionName}`;
+      }
+      
+      // Update user bio if something was selected
+      if (bio) {
+        // Update user profile with bio
+        // Note: This would require a user service update call
+        console.log('Would update user bio with:', bio);
+      }
+      
+      router.push('/pending-approval');
+    } catch (err) {
+      console.error('Error in onboarding:', err);
     }
     setIsSubmitting(false);
   };
@@ -298,8 +332,15 @@ export default function RegisterPage() {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">מה המצב שלכם?</h2>
-        <p className="text-gray-600">עסק או לימודים - ספרו לנו</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          {isRegistered ? 'בואו נתחיל!' : 'מה המצב שלכם?'}
+        </h2>
+        <p className="text-gray-600">
+          {isRegistered 
+            ? 'אתם יכולים להוסיף עסק או השכלה, או לדלג ולמלא מאוחר יותר'
+            : 'עסק או לימודים - ספרו לנו'
+          }
+        </p>
       </div>
 
       <Card className="p-6 border-2 hover:border-teal-300 transition-colors cursor-pointer" 
@@ -435,7 +476,7 @@ export default function RegisterPage() {
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8">
-              {currentStep > 1 && (
+              {currentStep > 1 && !isRegistered && (
                 <Button
                   type="button"
                   variant="outline"
@@ -448,29 +489,42 @@ export default function RegisterPage() {
                 </Button>
               )}
 
-              <div className="mr-auto">
+              <div className="mr-auto flex gap-3">
                 {currentStep < 3 ? (
                   <Button
                     type="button"
                     variant="primary"
                     onClick={nextStep}
                     disabled={!validateStep(currentStep)}
+                    loading={isSubmitting && currentStep === 2}
                     icon={faArrowLeft}
                     iconPosition="left"
                     className="rounded-xl"
                   >
-                    המשך
+                    {isSubmitting && currentStep === 2 ? 'נרשם...' : 'המשך'}
                   </Button>
                 ) : (
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    loading={isSubmitting}
-                    disabled={!validateStep(3)}
-                    className="rounded-xl"
-                  >
-                    {isSubmitting ? 'נרשם...' : 'הרשמה'}
-                  </Button>
+                  <>
+                    {isRegistered && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleSkipOnboarding}
+                        className="rounded-xl"
+                      >
+                        דלג ומלא מאוחר יותר
+                      </Button>
+                    )}
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      loading={isSubmitting}
+                      disabled={!validateStep(3)}
+                      className="rounded-xl"
+                    >
+                      {isSubmitting ? 'שומר...' : isRegistered ? 'המשך' : 'הרשמה'}
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
