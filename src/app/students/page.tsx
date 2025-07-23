@@ -16,6 +16,7 @@ import {
   faBookOpen
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui';
+import AutocompleteInput from '@/components/ui/AutocompleteInput';
 import { useAuth } from '@/hooks/useAuth';
 import { UserService } from '@/services/UserService';
 import { EducationService } from '@/services/EducationService';
@@ -41,6 +42,13 @@ function StudentsPage() {
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showContact, setShowContact] = useState<string | null>(null);
+  
+  // Autocomplete options extracted from student data
+  const [autocompleteOptions, setAutocompleteOptions] = useState({
+    institutions: [] as string[],
+    degrees: [] as string[],
+    graduationYears: [] as string[]
+  });
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
     institution: '',
@@ -166,6 +174,29 @@ function StudentsPage() {
         }
         
         setStudents(studentProfiles);
+        
+        // Extract autocomplete options from student data
+        const institutions = new Set<string>();
+        const degrees = new Set<string>();
+        const graduationYears = new Set<string>();
+        
+        studentProfiles.forEach(profile => {
+          if (profile.education.institutionName) {
+            institutions.add(profile.education.institutionName);
+          }
+          if (profile.education.degreeOrCertificate) {
+            degrees.add(profile.education.degreeOrCertificate);
+          }
+          if (profile.education.graduationYear) {
+            graduationYears.add(profile.education.graduationYear.toString());
+          }
+        });
+        
+        setAutocompleteOptions({
+          institutions: Array.from(institutions).sort((a, b) => a.localeCompare(b, 'he')),
+          degrees: Array.from(degrees).sort((a, b) => a.localeCompare(b, 'he')),
+          graduationYears: Array.from(graduationYears).sort((a, b) => parseInt(b) - parseInt(a)) // Recent years first
+        });
         
       } catch (error) {
         console.error('Error loading students:', error);
@@ -391,30 +422,27 @@ function StudentsPage() {
             </div>
 
             {/* Institution Filter */}
-            <input
-              type="text"
-              placeholder="מוסד לימודים"
+            <AutocompleteInput
               value={filters.institution}
-              onChange={(e) => setFilters(prev => ({ ...prev, institution: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              onChange={(value) => setFilters(prev => ({ ...prev, institution: value }))}
+              options={autocompleteOptions.institutions}
+              placeholder="מוסד לימודים"
             />
 
             {/* Degree Filter */}
-            <input
-              type="text"
-              placeholder="תחום לימודים"
+            <AutocompleteInput
               value={filters.degree}
-              onChange={(e) => setFilters(prev => ({ ...prev, degree: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              onChange={(value) => setFilters(prev => ({ ...prev, degree: value }))}
+              options={autocompleteOptions.degrees}
+              placeholder="תחום לימודים"
             />
 
             {/* Graduation Year Filter */}
-            <input
-              type="number"
-              placeholder="שנת סיום"
+            <AutocompleteInput
               value={filters.graduationYear}
-              onChange={(e) => setFilters(prev => ({ ...prev, graduationYear: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              onChange={(value) => setFilters(prev => ({ ...prev, graduationYear: value }))}
+              options={autocompleteOptions.graduationYears}
+              placeholder="שנת סיום"
             />
           </div>
 
