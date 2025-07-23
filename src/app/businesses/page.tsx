@@ -276,25 +276,11 @@ export default function BusinessesPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             הקהילה שלנו במספרים
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <div className="text-3xl font-bold text-teal-600 mb-2">
-                {businesses.length}
-              </div>
-              <div className="text-gray-600">עסקים רשומים</div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-teal-600 mb-2">
+              {businesses.length}
             </div>
-            <div>
-              <div className="text-3xl font-bold text-teal-600 mb-2">
-                -
-              </div>
-              <div className="text-gray-600">חברי קהילה</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-teal-600 mb-2">
-                -
-              </div>
-              <div className="text-gray-600">תחומי התמחות</div>
-            </div>
+            <div className="text-gray-600">עסקים רשומים</div>
           </div>
           
           {!isApproved && (
