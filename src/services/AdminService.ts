@@ -29,12 +29,16 @@ export class AdminService extends BaseService<Admin> {
       createdBy,
       permissions: ROLE_PERMISSIONS[adminData.role] || []
     });
-    return await this.create(admin.toFirestore() as Omit<Admin, 'id'>);
-  }
-
-  public async getAdminByUserId(userId: string): Promise<Admin | null> {
-    const admins = await this.getByField('userId', userId);
-    return admins.length > 0 ? admins[0] : null;
+    
+    // IMPORTANT: Use the userId (Firebase UID) as the document ID
+    // This ensures Firestore security rules work correctly
+    if (!adminData.userId) {
+      throw new Error('userId is required to create admin document');
+    }
+    
+    const adminFirestoreData = admin.toFirestore() as Omit<Admin, 'id'>;
+    await this.createWithId(adminData.userId, adminFirestoreData);
+    return adminData.userId;
   }
 
   public async getAdminByEmail(email: string): Promise<Admin | null> {
