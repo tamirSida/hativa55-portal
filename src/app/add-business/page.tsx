@@ -193,8 +193,8 @@ function AddBusinessPage() {
       });
       
       setFormData(prev => ({ ...prev, logoUrl: result.secureUrl }));
-    } catch (error: any) {
-      setErrors(prev => ({ ...prev, logo: error.message || 'שגיאה בהעלאת הלוגו. נסה שוב.' }));
+    } catch (error: unknown) {
+      setErrors(prev => ({ ...prev, logo: error instanceof Error ? error.message : 'שגיאה בהעלאת הלוגו. נסה שוב.' }));
     } finally {
       setUploadingLogo(false);
     }
@@ -229,8 +229,8 @@ function AddBusinessPage() {
         ...prev,
         imageUrls: [...prev.imageUrls, ...newImageUrls]
       }));
-    } catch (error: any) {
-      setErrors(prev => ({ ...prev, images: error.message || 'שגיאה בהעלאת התמונות. נסה שוב.' }));
+    } catch (error: unknown) {
+      setErrors(prev => ({ ...prev, images: error instanceof Error ? error.message : 'שגיאה בהעלאת התמונות. נסה שוב.' }));
     } finally {
       setUploadingImages(false);
     }
@@ -308,6 +308,11 @@ function AddBusinessPage() {
         description: formData.description,
         serviceTags: formData.serviceTags || [],
         tags: formData.tags || [],
+        jobPostings: [], // Required property
+        isActive: true, // Required property
+        // Add location data based on type
+        ...(formData.locationType === 'specific' && formData.wazeUrl && { wazeUrl: formData.wazeUrl }),
+        ...(formData.locationType === 'service-areas' && formData.serviceAreas?.length > 0 && { serviceAreas: formData.serviceAreas }),
         metadata: {
           category: formData.category,
           contactInfo: {
@@ -323,15 +328,6 @@ function AddBusinessPage() {
           locationType: formData.locationType
         }
       };
-
-      // Add location data based on type
-      if (formData.locationType === 'specific' && formData.wazeUrl) {
-        businessData.wazeUrl = formData.wazeUrl;
-      }
-      
-      if (formData.locationType === 'service-areas' && formData.serviceAreas?.length > 0) {
-        businessData.serviceAreas = formData.serviceAreas;
-      }
 
       const businessId = await businessService.createBusiness(businessData);
 
@@ -376,11 +372,11 @@ function AddBusinessPage() {
       });
       setCurrentStep(1);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating business:', error);
       setErrors(prev => ({ 
         ...prev, 
-        submit: error.message || 'שגיאה ביצירת העסק. נסה שוב.' 
+        submit: error instanceof Error ? error.message : 'שגיאה ביצירת העסק. נסה שוב.' 
       }));
     } finally {
       setUploadingImages(false);

@@ -62,7 +62,7 @@ export class Tag implements ITag {
     this.updatedAt = new Date();
   }
 
-  public toFirestore(): Record<string, any> {
+  public toFirestore(): Record<string, unknown> {
     return {
       name: this.name,
       category: this.category,
@@ -74,7 +74,7 @@ export class Tag implements ITag {
     };
   }
 
-  public static fromFirestore(id: string, data: any): Tag {
+  public static fromFirestore(id: string, data: Record<string, unknown>): Tag {
     return new Tag({
       id,
       ...data,

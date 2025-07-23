@@ -171,7 +171,7 @@ export class Admin implements IAdmin {
     this.updatedAt = new Date();
   }
 
-  public toFirestore(): Record<string, any> {
+  public toFirestore(): Record<string, unknown> {
     return {
       userId: this.userId,
       email: this.email,
@@ -185,7 +185,7 @@ export class Admin implements IAdmin {
     };
   }
 
-  public static fromFirestore(id: string, data: any): Admin {
+  public static fromFirestore(id: string, data: Record<string, unknown>): Admin {
     return new Admin({
       id,
       ...data,

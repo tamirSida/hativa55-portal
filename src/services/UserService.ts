@@ -7,7 +7,7 @@ export class UserService extends BaseService<User> {
     super('users');
   }
 
-  protected fromFirestore(id: string, data: any): User {
+  protected fromFirestore(id: string, data: Record<string, unknown>): User {
     return User.fromFirestore(id, data);
   }
 
@@ -74,7 +74,7 @@ export class UserService extends BaseService<User> {
 
   public async updateUserProfile(
     userId: string, 
-    updates: Partial<Pick<IUser, 'name' | 'university' | 'field' | 'bio' | 'contactInfo'>>
+    updates: Partial<Pick<IUser, 'name' | 'bio' | 'businessId'>>
   ): Promise<void> {
     const updateData = {
       ...updates,

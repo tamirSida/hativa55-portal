@@ -7,7 +7,7 @@ export class EducationService extends BaseService<Education> {
     super('education');
   }
 
-  protected fromFirestore(id: string, data: any): Education {
+  protected fromFirestore(id: string, data: Record<string, unknown>): Education {
     return Education.fromFirestore(id, data);
   }
 

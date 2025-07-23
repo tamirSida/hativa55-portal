@@ -38,17 +38,20 @@ export async function POST(request: NextRequest) {
       message: `Admin user ${name} created successfully`
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating admin:', error);
     
     // Handle specific Firebase Auth errors
     let errorMessage = 'Failed to create admin user';
-    if (error.code === 'auth/email-already-exists') {
-      errorMessage = 'כתובת האימייל כבר קיימת במערכת';
-    } else if (error.code === 'auth/invalid-email') {
-      errorMessage = 'כתובת אימייל לא תקינה';
-    } else if (error.code === 'auth/weak-password') {
-      errorMessage = 'הסיסמה חלשה מדי';
+    if (error && typeof error === 'object' && 'code' in error) {
+      const firebaseError = error as { code: string };
+      if (firebaseError.code === 'auth/email-already-exists') {
+        errorMessage = 'כתובת האימייל כבר קיימת במערכת';
+      } else if (firebaseError.code === 'auth/invalid-email') {
+        errorMessage = 'כתובת אימייל לא תקינה';
+      } else if (firebaseError.code === 'auth/weak-password') {
+        errorMessage = 'הסיסמה חלשה מדי';
+      }
     }
 
     return NextResponse.json(

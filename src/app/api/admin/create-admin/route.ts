@@ -34,10 +34,10 @@ export async function POST(request: NextRequest) {
       message: `Admin user ${name} created successfully`
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating admin:', error);
     return NextResponse.json(
-      { error: `Failed to create admin: ${error.message}` },
+      { error: `Failed to create admin: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }

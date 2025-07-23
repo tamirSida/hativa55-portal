@@ -128,7 +128,7 @@ export class Job implements IJob {
     return this.expiresAt ? new Date() > this.expiresAt : false;
   }
 
-  public toFirestore(): Record<string, any> {
+  public toFirestore(): Record<string, unknown> {
     return {
       posterId: this.posterId,
       title: this.title,
@@ -149,7 +149,7 @@ export class Job implements IJob {
     };
   }
 
-  public static fromFirestore(id: string, data: any): Job {
+  public static fromFirestore(id: string, data: Record<string, unknown>): Job {
     return new Job({
       id,
       ...data,

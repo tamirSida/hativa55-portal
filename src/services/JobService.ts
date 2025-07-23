@@ -7,7 +7,7 @@ export class JobService extends BaseService<Job> {
     super('jobs');
   }
 
-  protected fromFirestore(id: string, data: any): Job {
+  protected fromFirestore(id: string, data: Record<string, unknown>): Job {
     return Job.fromFirestore(id, data);
   }
 

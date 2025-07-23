@@ -7,7 +7,7 @@ export class TagService extends BaseService<Tag> {
     super('tags');
   }
 
-  protected fromFirestore(id: string, data: any): Tag {
+  protected fromFirestore(id: string, data: Record<string, unknown>): Tag {
     return Tag.fromFirestore(id, data);
   }
 

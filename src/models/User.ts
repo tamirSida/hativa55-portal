@@ -199,8 +199,8 @@ export class User implements IUser {
     return false; // Placeholder - will be overridden by context
   }
 
-  public toFirestore(): Record<string, any> {
-    const data: Record<string, any> = {
+  public toFirestore(): Record<string, unknown> {
+    const data: Record<string, unknown> = {
       email: this.email,
       name: this.name,
       identityId: this.identityId,
@@ -227,7 +227,7 @@ export class User implements IUser {
     return data;
   }
 
-  public static fromFirestore(id: string, data: any): User {
+  public static fromFirestore(id: string, data: Record<string, unknown>): User {
     return new User({
       id,
       ...data,

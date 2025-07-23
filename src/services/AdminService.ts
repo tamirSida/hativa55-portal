@@ -14,7 +14,7 @@ export class AdminService extends BaseService<Admin> {
     this.businessService = new BusinessService();
   }
 
-  protected fromFirestore(id: string, data: any): Admin {
+  protected fromFirestore(id: string, data: Record<string, unknown>): Admin {
     return Admin.fromFirestore(id, data);
   }
 

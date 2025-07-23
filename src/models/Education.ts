@@ -77,7 +77,7 @@ export class Education implements IEducation {
     return '';
   }
 
-  public toFirestore(): Record<string, any> {
+  public toFirestore(): Record<string, unknown> {
     return {
       userId: this.userId,
       institutionName: this.institutionName,
@@ -91,7 +91,7 @@ export class Education implements IEducation {
     };
   }
 
-  public static fromFirestore(id: string, data: any): Education {
+  public static fromFirestore(id: string, data: Record<string, unknown>): Education {
     return new Education({
       id,
       ...data,
