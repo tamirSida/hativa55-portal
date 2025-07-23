@@ -69,7 +69,9 @@ const popularServices = [
   'אחריות מורחבת',
   'שירות ללקוחות VIP',
   'הזמנות מראש',
-  'אירועים פרטיים'
+  'אירועים פרטיים',
+  'פתוח בשבת',
+  'כשר'
 ];
 
 const popularTags = [
@@ -138,6 +140,10 @@ function AddBusinessPage() {
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [customService, setCustomService] = useState('');
+  const [customTag, setCustomTag] = useState('');
+  const [showCustomServiceInput, setShowCustomServiceInput] = useState(false);
+  const [showCustomTagInput, setShowCustomTagInput] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -161,12 +167,48 @@ function AddBusinessPage() {
     }));
   };
 
+  const handleAddCustomService = () => {
+    if (customService.trim() && !formData.serviceTags.includes(customService.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        serviceTags: [...prev.serviceTags, customService.trim()]
+      }));
+      setCustomService('');
+      setShowCustomServiceInput(false);
+    }
+  };
+
+  const handleRemoveService = (service: string) => {
+    setFormData(prev => ({
+      ...prev,
+      serviceTags: prev.serviceTags.filter(s => s !== service)
+    }));
+  };
+
   const handleTagToggle = (tag: string) => {
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.includes(tag)
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag]
+    }));
+  };
+
+  const handleAddCustomTag = () => {
+    if (customTag.trim() && !formData.tags.includes(customTag.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, customTag.trim()]
+      }));
+      setCustomTag('');
+      setShowCustomTagInput(false);
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(t => t !== tag)
     }));
   };
 
@@ -410,22 +452,38 @@ function AddBusinessPage() {
 
   const getServiceAreaClass = (area: string) => {
     const isActive = formData.serviceAreas.includes(area);
-    return `bubble filter cursor-pointer text-center text-xs sm:text-sm py-2 px-3 ${isActive ? 'active' : ''}`;
+    return `cursor-pointer text-center text-xs sm:text-sm py-2 px-3 rounded-full border-2 transition-colors ${
+      isActive 
+        ? 'bg-teal-100 border-teal-500 text-teal-700' 
+        : 'bg-white border-gray-300 text-gray-700 hover:border-teal-300'
+    }`;
   };
 
   const getCityClass = (city: string) => {
     const isActive = formData.serviceAreas.includes(city);
-    return `bubble filter cursor-pointer text-center text-xs sm:text-sm py-2 px-2 sm:px-3 ${isActive ? 'active' : ''}`;
+    return `cursor-pointer text-center text-xs sm:text-sm py-2 px-2 sm:px-3 rounded-full border-2 transition-colors ${
+      isActive 
+        ? 'bg-teal-100 border-teal-500 text-teal-700' 
+        : 'bg-white border-gray-300 text-gray-700 hover:border-teal-300'
+    }`;
   };
 
   const getServiceClass = (service: string) => {
     const isActive = formData.serviceTags.includes(service);
-    return `bubble filter cursor-pointer text-center ${isActive ? 'active' : ''}`;
+    return `cursor-pointer text-center py-3 px-4 rounded-lg border-2 transition-colors font-medium ${
+      isActive 
+        ? 'bg-teal-100 border-teal-500 text-teal-700' 
+        : 'bg-white border-gray-300 text-gray-700 hover:border-teal-300'
+    }`;
   };
 
   const getTagClass = (tag: string) => {
     const isActive = formData.tags.includes(tag);
-    return `bubble filter cursor-pointer text-center ${isActive ? 'active' : ''}`;
+    return `cursor-pointer text-center py-3 px-4 rounded-lg border-2 transition-colors font-medium ${
+      isActive 
+        ? 'bg-purple-100 border-purple-500 text-purple-700' 
+        : 'bg-white border-gray-300 text-gray-700 hover:border-purple-300'
+    }`;
   };
 
   const getNavigationButtonClass = () => {
@@ -914,21 +972,91 @@ function AddBusinessPage() {
                   שירותים מיוחדים
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">בחר את השירותים הרלוונטיים לעסק שלך</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {popularServices.map((service) => (
-                    <label
-                      key={service}
-                      className={getServiceClass(service)}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {popularServices.map((service) => (
+                      <label
+                        key={service}
+                        className={getServiceClass(service)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.serviceTags.includes(service)}
+                          onChange={() => handleServiceToggle(service)}
+                          className="sr-only"
+                        />
+                        <span className="text-sm font-medium">{service}</span>
+                      </label>
+                    ))}
+                  </div>
+                  
+                  {/* Custom Service Input */}
+                  {!showCustomServiceInput ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomServiceInput(true)}
+                      className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-teal-500 hover:text-teal-600 transition-colors"
                     >
+                      <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
+                      הוסף שירות מותאם אישית
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
                       <input
-                        type="checkbox"
-                        checked={formData.serviceTags.includes(service)}
-                        onChange={() => handleServiceToggle(service)}
-                        className="sr-only"
+                        type="text"
+                        value={customService}
+                        onChange={(e) => setCustomService(e.target.value)}
+                        placeholder="הקלד שירות מותאם אישית..."
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomService();
+                          }
+                        }}
                       />
-                      <span className="text-sm font-medium">{service}</span>
-                    </label>
-                  ))}
+                      <Button
+                        type="button"
+                        variant="primary"
+                        onClick={handleAddCustomService}
+                        className="px-4 py-2"
+                      >
+                        הוסף
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowCustomServiceInput(false);
+                          setCustomService('');
+                        }}
+                        className="px-4 py-2"
+                      >
+                        ביטול
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Selected Services Display */}
+                  {formData.serviceTags.length > 0 && (
+                    <div className="mt-4 p-4 bg-teal-50 rounded-lg">
+                      <p className="text-sm text-teal-800 mb-3 font-medium">שירותים שנבחרו:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.serviceTags.map((service) => (
+                          <span key={service} className="inline-flex items-center gap-1 px-3 py-1 bg-teal-200 text-teal-900 rounded-full text-sm">
+                            {service}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveService(service)}
+                              className="ml-1 text-teal-700 hover:text-teal-900"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -938,35 +1066,92 @@ function AddBusinessPage() {
                   תגיות חיפוש
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">בחר תגיות שיעזרו לאנשים למצוא את העסק שלך בחיפוש</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {popularTags.map((tag) => (
-                    <label
-                      key={tag}
-                      className={getTagClass(tag)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.tags.includes(tag)}
-                        onChange={() => handleTagToggle(tag)}
-                        className="sr-only"
-                      />
-                      <span className="text-sm font-medium">{tag}</span>
-                    </label>
-                  ))}
-                </div>
-                
-                {formData.tags.length > 0 && (
-                  <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                    <p className="text-sm text-purple-800 mb-2">תגיות שנבחרו:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {formData.tags.map((tag) => (
-                        <span key={tag} className="px-2 py-1 bg-purple-200 text-purple-900 rounded text-xs">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {popularTags.map((tag) => (
+                      <label
+                        key={tag}
+                        className={getTagClass(tag)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.tags.includes(tag)}
+                          onChange={() => handleTagToggle(tag)}
+                          className="sr-only"
+                        />
+                        <span className="text-sm font-medium">{tag}</span>
+                      </label>
+                    ))}
                   </div>
-                )}
+                  
+                  {/* Custom Tag Input */}
+                  {!showCustomTagInput ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomTagInput(true)}
+                      className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-purple-500 hover:text-purple-600 transition-colors"
+                    >
+                      <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
+                      הוסף תגית מותאמת אישית
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customTag}
+                        onChange={(e) => setCustomTag(e.target.value)}
+                        placeholder="הקלד תגית מותאמת אישית..."
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomTag();
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="primary"
+                        onClick={handleAddCustomTag}
+                        className="px-4 py-2"
+                      >
+                        הוסף
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowCustomTagInput(false);
+                          setCustomTag('');
+                        }}
+                        className="px-4 py-2"
+                      >
+                        ביטול
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Selected Tags Display */}
+                  {formData.tags.length > 0 && (
+                    <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+                      <p className="text-sm text-purple-800 mb-3 font-medium">תגיות שנבחרו:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.tags.map((tag) => (
+                          <span key={tag} className="inline-flex items-center gap-1 px-3 py-1 bg-purple-200 text-purple-900 rounded-full text-sm">
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTag(tag)}
+                              className="ml-1 text-purple-700 hover:text-purple-900"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1037,7 +1222,7 @@ function AddBusinessPage() {
                       {formData.serviceTags.map((service) => (
                         <span
                           key={service}
-                          className="bubble filter bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm"
+                          className="bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm"
                         >
                           {service}
                         </span>
@@ -1053,7 +1238,7 @@ function AddBusinessPage() {
                       {formData.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="bubble filter bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"
+                          className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm"
                         >
                           {tag}
                         </span>
