@@ -88,7 +88,13 @@ Located in `firestore.rules`. Key principles:
 
 ### Recent Major Updates
 
-#### Admin Permission System & Map Filtering (Latest)
+#### Mobile Form Navigation & Business Creation Redirect (Latest)
+1. **Mobile Scroll Fix**: Fixed mobile form navigation scroll issues in both registration and business creation forms
+2. **Always Scroll to Top**: Form step navigation now scrolls to top regardless of validation status to prevent users being stuck at bottom
+3. **Business Creation Redirect**: Fixed business creation completion to redirect to profile page instead of resetting form
+4. **Better User Experience**: Users now see validation errors at top of form and are properly redirected after successful business creation
+
+#### Admin Permission System & Map Filtering
 1. **Admin Permission Fix**: Fixed critical issue where admin documents had incorrect IDs, preventing proper Firebase security rule access
 2. **Admin Document ID Structure**: Admin documents now use Firebase user UID as document ID, ensuring security rules work correctly
 3. **Map Filtering Enhancement**: Only businesses with Waze URLs appear on map view, preventing service-area-only businesses from showing
@@ -251,6 +257,8 @@ Currently no automated tests. Manual testing required for:
 - **Registration onboarding** (skip functionality, optional business/education setup)
 - **Admin permissions** (user management, business management, role-based access)
 - **Map filtering** (Waze URL validation, location-specific business display)
+- **Mobile form navigation** (scroll behavior, step transitions, validation error display)
+- **Business creation flow** (form completion, redirect behavior, user experience)
 
 ## Support
 For Firebase permission issues, check Firestore rules and user authentication status.
