@@ -355,10 +355,12 @@ function ProfilePage() {
                     הוסף עסק
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  <FontAwesomeIcon icon={faGraduationCap} className="w-4 h-4 ml-2" />
-                  עדכן השכלה
-                </Button>
+                <Link href="/profile/education" className="block">
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <FontAwesomeIcon icon={faGraduationCap} className="w-4 h-4 ml-2" />
+                    עדכן השכלה
+                  </Button>
+                </Link>
               </div>
             </Card>
 
