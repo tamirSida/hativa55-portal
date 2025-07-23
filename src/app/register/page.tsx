@@ -12,12 +12,9 @@ import {
   faEye, 
   faEyeSlash,
   faArrowLeft,
-  faArrowRight,
-  faBuilding,
-  faGraduationCap,
-  faCheck
+  faArrowRight
 } from '@fortawesome/free-solid-svg-icons';
-import { Button, Input, Card } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { ISRAELI_CITIES, GDUD_OPTIONS } from '@/utils/israeliData';
@@ -34,15 +31,6 @@ interface RegistrationData {
   phone: string;
   city: string;
   gdud: string;
-  
-  // Step 3: Profile
-  hasBusiness: boolean;
-  businessName: string;
-  businessDescription: string;
-  
-  hasEducation: boolean;
-  institutionName: string;
-  degreeOrCertificate: string;
 }
 
 export default function RegisterPage() {
@@ -50,7 +38,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false); // Track if basic registration is complete
   const { register, error, clearError } = useAuth();
   const router = useRouter();
 
@@ -62,13 +49,7 @@ export default function RegisterPage() {
     identityId: '',
     phone: '',
     city: '',
-    gdud: '',
-    hasBusiness: false,
-    businessName: '',
-    businessDescription: '',
-    hasEducation: false,
-    institutionName: '',
-    degreeOrCertificate: ''
+    gdud: ''
   });
 
 
@@ -89,24 +70,16 @@ export default function RegisterPage() {
                  formData.identityId.length === 9);
       case 2:
         return !!(formData.phone && formData.city && formData.gdud);
-      case 3:
-        if (formData.hasBusiness) {
-          return !!(formData.businessName && formData.businessDescription);
-        }
-        if (formData.hasEducation) {
-          return !!(formData.institutionName && formData.degreeOrCertificate);
-        }
-        return true;
       default:
         return false;
     }
   };
 
   const nextStep = async () => {
-    if (currentStep === 2 && validateStep(2) && !isRegistered) {
+    if (currentStep === 2 && validateStep(2)) {
       // Complete registration after step 2
-      await handleBasicRegistration();
-    } else if (validateStep(currentStep) && currentStep < 3) {
+      await handleRegistration();
+    } else if (validateStep(currentStep) && currentStep < 2) {
       clearError(); // Clear any existing errors when moving to next step
       setCurrentStep(currentStep + 1);
     }
@@ -119,7 +92,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleBasicRegistration = async () => {
+  const handleRegistration = async () => {
     setIsSubmitting(true);
     try {
       await register({
@@ -132,45 +105,22 @@ export default function RegisterPage() {
         gdud: formData.gdud,
         bio: ''
       });
-      setIsRegistered(true);
-      setCurrentStep(3); // Move to onboarding step
+      // Redirect to pending approval page
+      router.push('/pending-approval');
     } catch (err) {
       // Error handled by context
     }
     setIsSubmitting(false);
   };
 
-  const handleSkipOnboarding = () => {
-    router.push('/pending-approval');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateStep(3)) return;
-
-    setIsSubmitting(true);
-    try {
-      // Handle business/education creation here
-      // This will be implemented with the actual business/education creation logic
-      let bio = '';
-      if (formData.hasBusiness) {
-        bio = `עסק: ${formData.businessName} - ${formData.businessDescription}`;
-      } else if (formData.hasEducation) {
-        bio = `לימודים: ${formData.degreeOrCertificate} ב${formData.institutionName}`;
-      }
-      
-      // Update user bio if something was selected
-      if (bio) {
-        // Update user profile with bio
-        // Note: This would require a user service update call
-        console.log('Would update user bio with:', bio);
-      }
-      
-      router.push('/pending-approval');
-    } catch (err) {
-      console.error('Error in onboarding:', err);
+    if (currentStep === 1 && validateStep(1)) {
+      clearError();
+      setCurrentStep(2);
+    } else if (currentStep === 2 && validateStep(2)) {
+      await handleRegistration();
     }
-    setIsSubmitting(false);
   };
 
   const renderStep1 = () => (
@@ -329,107 +279,6 @@ export default function RegisterPage() {
     </div>
   );
 
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          {isRegistered ? 'בואו נתחיל!' : 'מה המצב שלכם?'}
-        </h2>
-        <p className="text-gray-600">
-          {isRegistered 
-            ? 'אתם יכולים להוסיף עסק או השכלה, או לדלג ולמלא מאוחר יותר'
-            : 'עסק או לימודים - ספרו לנו'
-          }
-        </p>
-      </div>
-
-      <Card className="p-6 border-2 hover:border-teal-300 transition-colors cursor-pointer" 
-            onClick={() => setFormData({...formData, hasBusiness: !formData.hasBusiness})}>
-        <div className="flex items-center gap-4">
-          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-            formData.hasBusiness ? 'bg-teal-600 border-teal-600' : 'border-gray-300'
-          }`}>
-            {formData.hasBusiness && <FontAwesomeIcon icon={faCheck} className="w-3 h-3 text-white" />}
-          </div>
-          <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-teal-600" />
-          <div>
-            <h3 className="font-semibold text-gray-900">יש לי עסק</h3>
-            <p className="text-gray-600 text-sm">אני בעל/ת עסק או עצמאי/ת</p>
-          </div>
-        </div>
-      </Card>
-
-      {formData.hasBusiness && (
-        <div className="space-y-4 bg-teal-50 p-6 rounded-xl">
-          <Input
-            id="businessName"
-            name="businessName"
-            type="text"
-            label="שם העסק"
-            value={formData.businessName}
-            onChange={handleChange}
-            required
-            placeholder="הזינו את שם העסק"
-          />
-          <div>
-            <label htmlFor="businessDescription" className="block text-sm font-medium text-gray-700 mb-2">
-              תיאור קצר של העסק
-            </label>
-            <textarea
-              id="businessDescription"
-              name="businessDescription"
-              value={formData.businessDescription}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              placeholder="מה העסק שלכם עושה?"
-            />
-          </div>
-        </div>
-      )}
-
-      <Card className="p-6 border-2 hover:border-teal-300 transition-colors cursor-pointer"
-            onClick={() => setFormData({...formData, hasEducation: !formData.hasEducation})}>
-        <div className="flex items-center gap-4">
-          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-            formData.hasEducation ? 'bg-teal-600 border-teal-600' : 'border-gray-300'
-          }`}>
-            {formData.hasEducation && <FontAwesomeIcon icon={faCheck} className="w-3 h-3 text-white" />}
-          </div>
-          <FontAwesomeIcon icon={faGraduationCap} className="w-6 h-6 text-teal-600" />
-          <div>
-            <h3 className="font-semibold text-gray-900">לימודים</h3>
-            <p className="text-gray-600 text-sm">אני לומד/ת או סיימתי לימודים</p>
-          </div>
-        </div>
-      </Card>
-
-      {formData.hasEducation && (
-        <div className="space-y-4 bg-teal-50 p-6 rounded-xl">
-          <Input
-            id="institutionName"
-            name="institutionName"
-            type="text"
-            label="מוסד לימודים"
-            value={formData.institutionName}
-            onChange={handleChange}
-            required
-            placeholder="אוניברסיטת תל אביב, קורסרה, וכו'"
-          />
-          <Input
-            id="degreeOrCertificate"
-            name="degreeOrCertificate"
-            type="text"
-            label="תואר/תעודה"
-            value={formData.degreeOrCertificate}
-            onChange={handleChange}
-            required
-            placeholder="תואר ראשון במדעי המחשב, קורס React, וכו'"
-          />
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-teal-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -449,7 +298,7 @@ export default function RegisterPage() {
           
           {/* Progress Bar */}
           <div className="flex justify-center gap-2 mb-4">
-            {[1, 2, 3].map((step) => (
+            {[1, 2].map((step) => (
               <div
                 key={step}
                 className={`w-3 h-3 rounded-full ${
@@ -458,7 +307,7 @@ export default function RegisterPage() {
               />
             ))}
           </div>
-          <p className="text-gray-600 text-sm">שלב {currentStep} מתוך 3</p>
+          <p className="text-gray-600 text-sm">שלב {currentStep} מתוך 2</p>
         </div>
 
         {/* Form */}
@@ -472,11 +321,10 @@ export default function RegisterPage() {
 
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8">
-              {currentStep > 1 && !isRegistered && (
+              {currentStep > 1 && (
                 <Button
                   type="button"
                   variant="outline"
@@ -490,42 +338,17 @@ export default function RegisterPage() {
               )}
 
               <div className="mr-auto flex gap-3">
-                {currentStep < 3 ? (
-                  <Button
-                    type="button"
-                    variant="primary"
-                    onClick={nextStep}
-                    disabled={!validateStep(currentStep)}
-                    loading={isSubmitting && currentStep === 2}
-                    icon={faArrowLeft}
-                    iconPosition="left"
-                    className="rounded-xl"
-                  >
-                    {isSubmitting && currentStep === 2 ? 'נרשם...' : 'המשך'}
-                  </Button>
-                ) : (
-                  <>
-                    {isRegistered && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleSkipOnboarding}
-                        className="rounded-xl"
-                      >
-                        דלג ומלא מאוחר יותר
-                      </Button>
-                    )}
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      loading={isSubmitting}
-                      disabled={!validateStep(3)}
-                      className="rounded-xl"
-                    >
-                      {isSubmitting ? 'שומר...' : isRegistered ? 'המשך' : 'הרשמה'}
-                    </Button>
-                  </>
-                )}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={isSubmitting}
+                  disabled={!validateStep(currentStep)}
+                  icon={currentStep === 2 ? undefined : faArrowLeft}
+                  iconPosition="left"
+                  className="rounded-xl"
+                >
+                  {isSubmitting ? (currentStep === 2 ? 'נרשם...' : 'טוען...') : (currentStep === 2 ? 'הרשמה' : 'המשך')}
+                </Button>
               </div>
             </div>
           </form>
