@@ -11,6 +11,7 @@ import {
   faUsers,
   faUserGraduate,
   faPhone,
+  faEnvelope,
   faMapMarkerAlt,
   faCalendarAlt,
   faBookOpen
@@ -527,6 +528,10 @@ function StudentsPage() {
                             <strong>טלפון:</strong> {studentProfile.user.phone}
                           </div>
                         )}
+                        <div className="flex items-center text-sm text-teal-700">
+                          <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 ml-1" />
+                          <strong>אימייל:</strong> {studentProfile.user.email}
+                        </div>
                       </div>
                       <Button
                         onClick={() => handleConnectReveal(studentProfile.user.id)}
