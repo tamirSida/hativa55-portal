@@ -33,7 +33,6 @@ interface SearchFilters {
   query: string;
   institution: string;
   degree: string;
-  graduationYear: string;
   connectionType: 'students' | 'alumni';
 }
 
@@ -46,14 +45,12 @@ function StudentsPage() {
   // Autocomplete options extracted from student data
   const [autocompleteOptions, setAutocompleteOptions] = useState({
     institutions: [] as string[],
-    degrees: [] as string[],
-    graduationYears: [] as string[]
+    degrees: [] as string[]
   });
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
     institution: '',
     degree: '',
-    graduationYear: '',
     connectionType: 'students'
   });
 
@@ -81,8 +78,7 @@ function StudentsPage() {
           setFilters(prev => ({
             ...prev,
             institution: currentEducation.institutionName,
-            degree: currentEducation.degreeOrCertificate,
-            graduationYear: currentEducation.yearExpected?.toString() || ''
+            degree: currentEducation.degreeOrCertificate
           }));
         }
       } catch (error) {
@@ -178,7 +174,6 @@ function StudentsPage() {
         // Extract autocomplete options from student data
         const institutions = new Set<string>();
         const degrees = new Set<string>();
-        const graduationYears = new Set<string>();
         
         studentProfiles.forEach(profile => {
           if (profile.education.institutionName) {
@@ -187,15 +182,11 @@ function StudentsPage() {
           if (profile.education.degreeOrCertificate) {
             degrees.add(profile.education.degreeOrCertificate);
           }
-          if (profile.education.graduationYear) {
-            graduationYears.add(profile.education.graduationYear.toString());
-          }
         });
         
         setAutocompleteOptions({
           institutions: Array.from(institutions).sort((a, b) => a.localeCompare(b, 'he')),
-          degrees: Array.from(degrees).sort((a, b) => a.localeCompare(b, 'he')),
-          graduationYears: Array.from(graduationYears).sort((a, b) => parseInt(b) - parseInt(a)) // Recent years first
+          degrees: Array.from(degrees).sort((a, b) => a.localeCompare(b, 'he'))
         });
         
       } catch (error) {
@@ -314,16 +305,6 @@ function StudentsPage() {
       );
     }
     
-    // Graduation year filter
-    if (filters.graduationYear.trim()) {
-      const year = parseInt(filters.graduationYear);
-      filtered = filtered.filter(profile => {
-        const targetYear = profile.education.status === EducationStatus.IN_PROGRESS 
-          ? profile.education.yearExpected 
-          : profile.education.yearCompleted;
-        return targetYear === year;
-      });
-    }
     
     // Sort by match score (highest first), then by name
     return filtered.sort((a, b) => {
@@ -405,7 +386,7 @@ function StudentsPage() {
 
         {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             {/* General Search */}
             <div className="relative">
               <FontAwesomeIcon 
@@ -437,13 +418,6 @@ function StudentsPage() {
               placeholder="תחום לימודים"
             />
 
-            {/* Graduation Year Filter */}
-            <AutocompleteInput
-              value={filters.graduationYear}
-              onChange={(value) => setFilters(prev => ({ ...prev, graduationYear: value }))}
-              options={autocompleteOptions.graduationYears}
-              placeholder="שנת סיום"
-            />
           </div>
 
           <div className="flex justify-between items-center">
