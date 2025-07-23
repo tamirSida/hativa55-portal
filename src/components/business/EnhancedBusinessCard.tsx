@@ -180,7 +180,7 @@ export default function EnhancedBusinessCard({
       </Link>
 
       {/* Action Buttons Overlay - Show on mobile, hide on desktop until hover */}
-      <div className="absolute top-2 sm:top-3 left-2 sm:left-3 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute bottom-12 sm:bottom-14 left-2 sm:left-3 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <div className="flex gap-1">
           {/* Navigation Button */}
           {business.wazeUrl && (
