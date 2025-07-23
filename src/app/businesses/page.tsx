@@ -121,20 +121,13 @@ export default function BusinessesPage() {
 
         {/* Access Level Notice for Pending/Non-logged Users */}
         {!isApproved && (
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6 mb-8">
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-3">
-                <FontAwesomeIcon icon={faLock} className="w-6 h-6 text-yellow-600 mt-1" />
+                <FontAwesomeIcon icon={faBuilding} className="w-6 h-6 text-blue-600 mt-1" />
                 <div>
-                  <h3 className="text-lg font-semibold text-yellow-800 mb-2">
-                    פרטי קשר מוגבלים
-                  </h3>
-                  <p className="text-yellow-700 mb-3">
-                    אתה יכול לראות את כל העסקים, אך פרטי הקשר זמינים רק לחברי הקהילה. 
-                    {isAuthenticated 
-                      ? " ברגע שהחשבון יאושר תקבל גישה לפרטי קשר מלאים."
-                      : " הצטרף לקהילה כדי לראות פרטי קשר מלאים."
-                    }
+                  <p className="text-blue-700 mb-3">
+                    משתמשים לא מאומתים יכולים לצפות בדף העסקים בלבד.
                   </p>
                   <div className="flex gap-3">
                     {!isAuthenticated ? (
@@ -146,7 +139,7 @@ export default function BusinessesPage() {
                           </Button>
                         </Link>
                         <Link href="/login">
-                          <Button size="sm" variant="outline" className="border-yellow-300 text-yellow-800">
+                          <Button size="sm" variant="outline" className="border-blue-300 text-blue-800">
                             <FontAwesomeIcon icon={faSignInAlt} className="w-4 h-4 ml-2" />
                             התחבר
                           </Button>
@@ -269,13 +262,7 @@ export default function BusinessesPage() {
                           בעלים: {business.ownerName}
                         </p>
                       </div>
-                    ) : (
-                      <div className="bg-gray-100 p-2 rounded-lg">
-                        <p className="text-xs text-gray-500 text-center">
-                          פרטי קשר זמינים למשתמשים מאושרים בלבד
-                        </p>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 </Card>
               </Link>
