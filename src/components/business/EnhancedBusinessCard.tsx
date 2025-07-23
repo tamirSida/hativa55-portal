@@ -11,7 +11,8 @@ import {
   faEnvelope,
   faClock,
   faRoute,
-  faExternalLinkAlt
+  faExternalLinkAlt,
+  faLocationArrow
 } from '@fortawesome/free-solid-svg-icons';
 import { Card } from '@/components/ui';
 import { Business } from '@/models/Business';
@@ -192,7 +193,7 @@ export default function EnhancedBusinessCard({
               className="p-1.5 sm:p-2 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors touch-manipulation"
               title="נווט עם Waze"
             >
-              <FontAwesomeIcon icon={faRoute} className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <FontAwesomeIcon icon={faLocationArrow} className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
             </button>
           )}
 

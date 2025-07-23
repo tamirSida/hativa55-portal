@@ -13,7 +13,8 @@ import {
   faArrowRight, 
   faClock,
   faTag,
-  faBuilding
+  faBuilding,
+  faLocationArrow
 } from '@fortawesome/free-solid-svg-icons';
 import { BusinessService } from '@/services/BusinessService';
 import { Business } from '@/models/Business';
@@ -243,9 +244,9 @@ const BusinessPage: React.FC<BusinessPageProps> = () => {
                     href={normalizeWazeUrl(business.wazeUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    className="inline-flex items-center px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors font-medium"
                   >
-                    <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 ml-2" />
+                    <FontAwesomeIcon icon={faLocationArrow} className="w-4 h-4 ml-2" />
                     נווט ב-Waze
                   </a>
                 )}

@@ -86,11 +86,13 @@ Located in `firestore.rules`. Key principles:
 ### Recent Major Updates
 
 #### Business Discovery Platform (Latest)
-1. **Advanced Search & Filtering**: Location-based search with "Near Me" functionality
-2. **Interactive Map View**: Leaflet-based map with business markers and popups
-3. **Location Intelligence**: Geocoding system for Waze URLs and Israeli service areas
-4. **Mobile-First Design**: Fully responsive interface optimized for mobile devices
-5. **Enhanced Business Cards**: Quick action buttons (call, email, navigate)
+1. **Advanced Search & Filtering**: Location-based search with "Near Me" functionality using geolocation API
+2. **Interactive Map View**: Leaflet-based map with business markers, hover previews (desktop), and tap interactions (mobile)
+3. **Location Intelligence**: Geocoding system for Waze URLs and comprehensive Israeli service areas mapping
+4. **Mobile-First Design**: Fully responsive interface optimized for mobile devices with touch-friendly interactions
+5. **Enhanced Business Cards**: Quick action buttons (call, email, navigate with Waze-style icon)
+6. **Dual Interaction Patterns**: Desktop hover-to-preview + click-to-navigate, Mobile tap-to-preview + tap-again-to-navigate
+7. **Real-time Distance Calculations**: Haversine formula for accurate proximity-based search and sorting
 
 #### Previous Updates
 1. **Firebase Permissions**: Fixed individual business page access for non-owners
@@ -119,12 +121,13 @@ const { user, isAuthenticated, isAdmin, isApproved } = useAuth();
 - **Discovery**: `/businesses` (advanced search with map/list views)
 
 ### Business Discovery Features
-- **Text Search**: Search across names, descriptions, categories, tags
-- **Location Search**: "Near Me" with geolocation + manual address/city input
-- **Distance-Based Results**: Sort by proximity with radius controls (1-50km)
-- **Category & Tag Filtering**: Multi-select filter chips
-- **Map View**: Interactive Leaflet map with hover previews (desktop) and tap interactions (mobile)
-- **Mobile Optimized**: Touch-friendly interface with appropriate interaction patterns
+- **Text Search**: Real-time search across business names, descriptions, categories, and tags
+- **Location Search**: "Near Me" with geolocation API + manual address/city input with autocomplete
+- **Distance-Based Results**: Sort by proximity with adjustable radius controls (1-50km slider)
+- **Category & Tag Filtering**: Multi-select filter chips with active filter count display
+- **Map View**: Interactive Leaflet map with custom markers, hover cards (desktop), and mobile-optimized popups
+- **View Toggle**: Seamless switching between list and map views with persistent search state
+- **Mobile Optimized**: Touch-friendly interface with appropriate interaction patterns and responsive breakpoints
 
 ### Location Services
 - **Geocoding**: Free Nominatim (OpenStreetMap) service for address validation
@@ -149,11 +152,13 @@ Use `ClientCloudinaryService` for browser-side uploads to Cloudinary.
 - **`wazeUtils.ts`**: Parse Waze URLs and extract addresses/coordinates
 
 ### Key Features
-- **Desktop Map Interaction**: Hover to preview, click to navigate
-- **Mobile Map Interaction**: Tap to preview, tap again to navigate
-- **Distance-Based Search**: Find businesses within specified radius
-- **Service Areas**: Support for both specific addresses and regional coverage
-- **Rate Limiting**: Respects free geocoding service limits
+- **Desktop Map Interaction**: Hover markers for preview cards, click markers to navigate directly to business
+- **Mobile Map Interaction**: First tap shows detailed popup, second tap navigates to business page
+- **Distance-Based Search**: Find businesses within specified radius with real-time distance display
+- **Service Areas**: Support for both specific addresses and regional coverage (3-tier Israeli mapping system)
+- **Rate Limiting**: Respects free geocoding service limits with proper error handling
+- **Navigation Integration**: Waze-style location arrow icon for seamless GPS navigation
+- **Responsive Design**: Mobile-first approach with touch-optimized controls and interactions
 
 ## Deployment Notes
 
@@ -182,10 +187,12 @@ Currently no automated tests. Manual testing required for:
 - Firebase permissions
 - Image uploads
 - Waze URL parsing
-- **Location-based search** and distance calculations
-- **Map interactions** (desktop hover vs mobile tap)
-- **Mobile responsiveness** across different screen sizes
-- **Geolocation features** ("Near Me" functionality)
+- **Location-based search** and distance calculations with radius controls
+- **Map interactions** (desktop hover vs mobile tap patterns)
+- **Mobile responsiveness** across different screen sizes and orientations
+- **Geolocation features** ("Near Me" functionality with permission handling)
+- **Touch interactions** (tap-to-preview, tap-again-to-navigate on mobile)
+- **Navigation integration** (Waze URL parsing and GPS navigation)
 
 ## Support
 For Firebase permission issues, check Firestore rules and user authentication status.
