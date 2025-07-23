@@ -119,6 +119,14 @@ export default function BusinessesPage() {
       filtered = businessesWithDistance;
     }
 
+    // For map view, only show businesses that have a Waze URL (specific location)
+    if (filters.viewMode === 'map') {
+      filtered = filtered.filter(business => {
+        // Only show businesses with Waze URLs on the map
+        return business.wazeUrl && business.wazeUrl.trim() !== '';
+      });
+    }
+
     // Sorting
     filtered.sort((a, b) => {
       switch (filters.sortBy) {

@@ -145,13 +145,20 @@ export default function AdminBusinessesPage() {
                       <h3 className="text-lg font-semibold text-gray-900">
                         {business.name}
                       </h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        business.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {business.isActive ? 'פעיל' : 'לא פעיל'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          business.isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {business.isActive ? 'פעיל' : 'לא פעיל'}
+                        </span>
+                        {(!business.wazeUrl || !business.wazeUrl.trim()) && (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            ללא Waze
+                          </span>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="text-sm text-gray-600 space-y-1">

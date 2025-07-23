@@ -386,6 +386,11 @@ export default function BusinessSearchFilters({
             {/* Results Count */}
             <span className="text-xs sm:text-sm text-gray-600">
               {businessesCount} עסקים
+              {filters.viewMode === 'map' && (
+                <span className="block text-xs text-gray-500 mt-0.5">
+                  (רק עסקים עם קישור Waze)
+                </span>
+              )}
             </span>
 
             {/* Clear All Filters */}

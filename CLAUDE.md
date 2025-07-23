@@ -88,7 +88,14 @@ Located in `firestore.rules`. Key principles:
 
 ### Recent Major Updates
 
-#### Registration Flow Improvement (Latest)
+#### Admin Permission System & Map Filtering (Latest)
+1. **Admin Permission Fix**: Fixed critical issue where admin documents had incorrect IDs, preventing proper Firebase security rule access
+2. **Admin Document ID Structure**: Admin documents now use Firebase user UID as document ID, ensuring security rules work correctly
+3. **Map Filtering Enhancement**: Only businesses with Waze URLs appear on map view, preventing service-area-only businesses from showing
+4. **Admin Creation Safety**: AdminService.createAdmin() now enforces using Firebase UID as document ID to prevent future permission issues
+5. **Visual Indicators**: Admin interface shows "ללא Waze" badges for businesses without specific location data
+
+#### Registration Flow Improvement
 1. **3-Step Registration Process**: Basic info → Location/background → Optional onboarding
 2. **Complete Registration After Step 2**: User account created and pending approval after step 2
 3. **Optional Onboarding Step 3**: Users can choose to add business, education, or skip
@@ -158,6 +165,7 @@ const { user, isAuthenticated, isAdmin, isApproved } = useAuth();
 - **Distance-Based Results**: Sort by proximity with adjustable radius controls (1-50km slider)
 - **Category & Tag Filtering**: Multi-select filter chips with active filter count display
 - **Map View**: Interactive Leaflet map with custom markers, hover cards (desktop), and mobile-optimized popups
+- **Waze-Only Map Filtering**: Only businesses with Waze URLs appear on map (ensures specific locations, not just service areas)
 - **View Toggle**: Seamless switching between list and map views with persistent search state
 - **Mobile Optimized**: Touch-friendly interface with appropriate interaction patterns and responsive breakpoints
 
@@ -216,6 +224,13 @@ Use `ClientCloudinaryService` for browser-side uploads to Cloudinary.
 - **Profile System**: Complete user profile management with education tracking
 - **Education CRUD**: Full create, read, update, delete operations for education records
 - **Student Networking**: Automated matching and connection system based on education data
+- **Admin Management**: User and business management with proper permission system and Firebase security integration
+
+### Admin Permission System
+- **Document ID Structure**: Admin documents use Firebase user UID as document ID for proper security rule access
+- **Permission-Based Access**: Admins have role-based permissions (super_admin, admin) with specific capabilities
+- **Firestore Security Integration**: Admin permissions work seamlessly with Firestore security rules
+- **Visual Status Indicators**: Admin interface shows clear status badges for businesses and users
 
 ## Testing
 Currently no automated tests. Manual testing required for:
@@ -234,6 +249,8 @@ Currently no automated tests. Manual testing required for:
 - **Education management** (CRUD operations, form validation, Firestore integration)
 - **Student networking** (profile matching, contact revelation, alumni/student filtering)
 - **Registration onboarding** (skip functionality, optional business/education setup)
+- **Admin permissions** (user management, business management, role-based access)
+- **Map filtering** (Waze URL validation, location-specific business display)
 
 ## Support
 For Firebase permission issues, check Firestore rules and user authentication status.

@@ -221,7 +221,8 @@ export default function BusinessMap({
         {businesses.map((business) => {
           const locationData = business.metadata?.location as EnhancedLocationData | undefined;
           
-          if (!locationData?.coordinates || !businessIcon) {
+          // Only show businesses with Waze URLs (specific locations) on the map
+          if (!business.wazeUrl || !business.wazeUrl.trim() || !locationData?.coordinates || !businessIcon) {
             return null;
           }
 
