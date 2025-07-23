@@ -144,15 +144,24 @@ export class UserService extends BaseService<User> {
   }
 
   public async getPendingUsers(): Promise<User[]> {
-    return await this.getByField('status', UserStatus.PENDING, [orderBy('createdAt', 'asc')]);
+    // Remove orderBy to avoid composite index requirement - will sort client-side
+    const users = await this.getByField('status', UserStatus.PENDING);
+    // Sort by createdAt on client side
+    return users.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   }
 
   public async getApprovedUsers(): Promise<User[]> {
-    return await this.getByField('status', UserStatus.APPROVED, [orderBy('name')]);
+    // Remove orderBy to avoid composite index requirement - will sort client-side
+    const users = await this.getByField('status', UserStatus.APPROVED);
+    // Sort by name on client side
+    return users.sort((a, b) => a.name.localeCompare(b.name, 'he'));
   }
 
   public async getUsersByStatus(status: UserStatus): Promise<User[]> {
-    return await this.getByField('status', status, [orderBy('createdAt', 'desc')]);
+    // Remove orderBy to avoid composite index requirement - will sort client-side
+    const users = await this.getByField('status', status);
+    // Sort by createdAt (desc) on client side
+    return users.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   public async approveUser(userId: string, approverId: string): Promise<void> {
