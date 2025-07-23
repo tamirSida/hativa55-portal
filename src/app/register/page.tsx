@@ -83,6 +83,8 @@ export default function RegisterPage() {
     } else if (validateStep(currentStep) && currentStep < 2) {
       clearError(); // Clear any existing errors when moving to next step
       setCurrentStep(currentStep + 1);
+      // Scroll to top on mobile to prevent scrolling issues
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -90,6 +92,8 @@ export default function RegisterPage() {
     if (currentStep > 1) {
       clearError(); // Clear any existing errors when moving to previous step
       setCurrentStep(currentStep - 1);
+      // Scroll to top on mobile to prevent scrolling issues
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 

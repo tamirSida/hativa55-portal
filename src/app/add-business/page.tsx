@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { withAuth } from '@/components/auth';
+import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faBuilding, 
@@ -109,6 +110,7 @@ const daysOfWeek = [
 
 function AddBusinessPage() {
   const { user, firebaseUser } = useAuth();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const cloudinaryService = new ClientCloudinaryService();
   
@@ -326,11 +328,15 @@ function AddBusinessPage() {
   const nextStep = () => {
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, 5));
+      // Scroll to top on mobile to prevent scrolling issues
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const prevStep = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
+    // Scroll to top on mobile to prevent scrolling issues
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async () => {
@@ -384,35 +390,11 @@ function AddBusinessPage() {
         }
       }
 
-      // Success - redirect to business page or success page
+      // Success - redirect to profile page
       alert('העסק נוצר בהצלחה!');
       
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        category: '',
-        phone: '',
-        email: '',
-        website: '',
-        locationType: 'specific',
-        wazeUrl: '',
-        serviceAreas: [],
-        logoUrl: '',
-        imageUrls: [],
-        openHours: {
-          sunday: { open: '09:00', close: '17:00', closed: false },
-          monday: { open: '09:00', close: '17:00', closed: false },
-          tuesday: { open: '09:00', close: '17:00', closed: false },
-          wednesday: { open: '09:00', close: '17:00', closed: false },
-          thursday: { open: '09:00', close: '17:00', closed: false },
-          friday: { open: '09:00', close: '14:00', closed: false },
-          saturday: { open: '00:00', close: '00:00', closed: true }
-        },
-        serviceTags: [],
-        tags: []
-      });
-      setCurrentStep(1);
+      // Redirect to profile page instead of resetting form
+      router.push('/profile');
       
     } catch (error: unknown) {
       console.error('Error creating business:', error);
