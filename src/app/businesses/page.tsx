@@ -1,32 +1,39 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faBuilding, 
-  faMapMarkerAlt, 
-  faPhone, 
-  faEnvelope,
-  faLock,
   faUserPlus,
   faSignInAlt,
-  faClock
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons';
-import { Button, Card } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { BusinessService } from '@/services/BusinessService';
 import { Business } from '@/models/Business';
-import { getLocationDisplayText } from '@/utils/wazeUtils';
+import BusinessSearchFilters, { type SearchFilters } from '@/components/business/BusinessSearchFilters';
+import BusinessMap from '@/components/business/BusinessMap';
+import EnhancedBusinessCard from '@/components/business/EnhancedBusinessCard';
+import { findBusinessesNearLocation, type EnhancedLocationData } from '@/utils/businessLocationEnhancer';
 
 export default function BusinessesPage() {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const isApproved = isAuthenticated && (isAdmin || (user && user.isApproved()));
   
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [allBusinesses, setAllBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState<SearchFilters>({
+    textQuery: '',
+    location: { type: 'none', radius: 25 },
+    categories: [],
+    tags: [],
+    sortBy: 'name',
+    viewMode: 'list'
+  });
 
+  // Load all businesses
   useEffect(() => {
     const loadBusinesses = async () => {
       try {
@@ -39,11 +46,10 @@ export default function BusinessesPage() {
         });
         
         const businessService = new BusinessService();
-        // Load businesses for everyone - contact info will be filtered in the UI
         const allBusinesses = await businessService.getActiveBusinesses();
         console.log('Successfully loaded businesses:', allBusinesses.length);
         
-        setBusinesses(allBusinesses);
+        setAllBusinesses(allBusinesses);
       } catch (error) {
         console.error('Error loading businesses:', error);
       } finally {
@@ -54,57 +60,102 @@ export default function BusinessesPage() {
     loadBusinesses();
   }, [isAuthenticated, isApproved, isAdmin]);
 
-  const getBusinessStatus = (business: Business) => {
-    const openHours = business.metadata?.openHours;
-    if (!openHours) return null;
-    
-    const today = new Date().getDay();
-    
-    // Check both Hebrew and English day names
-    const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-    const englishDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    
-    // Determine which format is used in the data
-    const hasEnglishKeys = englishDays.some(day => openHours[day]);
-    const todayKey = hasEnglishKeys ? englishDays[today] : hebrewDays[today];
-    
-    const todayHours = openHours[todayKey];
-    if (!todayHours || todayHours.closed) {
-      return { status: 'סגור', color: 'text-red-600', bgColor: 'bg-red-50' };
-    }
-    
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    const [openHour, openMin] = todayHours.open.split(':').map(Number);
-    const [closeHour, closeMin] = todayHours.close.split(':').map(Number);
-    const openTime = openHour * 60 + openMin;
-    const closeTime = closeHour * 60 + closeMin;
-    
-    if (currentTime >= openTime && currentTime <= closeTime) {
-      // Check if closing within an hour
-      const timeUntilClose = closeTime - currentTime;
-      if (timeUntilClose <= 60) {
-        return { 
-          status: `סוגר בקרוב ${todayHours.close}`, 
-          color: 'text-yellow-700', 
-          bgColor: 'bg-yellow-50' 
-        };
+  // Extract available categories and tags
+  const { availableCategories, availableTags } = useMemo(() => {
+    const categories = new Set<string>();
+    const tags = new Set<string>();
+
+    allBusinesses.forEach(business => {
+      if (business.metadata?.category) {
+        categories.add(business.metadata.category);
       }
-      return { 
-        status: `פתוח עד ${todayHours.close}`, 
-        color: 'text-green-700', 
-        bgColor: 'bg-green-50' 
-      };
-    } else if (currentTime < openTime) {
-      return { 
-        status: `פותח ב-${todayHours.open}`, 
-        color: 'text-blue-700', 
-        bgColor: 'bg-blue-50' 
-      };
-    } else {
-      return { status: 'סגור', color: 'text-red-600', bgColor: 'bg-red-50' };
+      if (business.tags) {
+        business.tags.forEach(tag => tags.add(tag));
+      }
+    });
+
+    return {
+      availableCategories: Array.from(categories).sort(),
+      availableTags: Array.from(tags).sort()
+    };
+  }, [allBusinesses]);
+
+  // Filter and sort businesses based on current filters
+  const filteredBusinesses = useMemo(() => {
+    let filtered = [...allBusinesses];
+
+    // Text search
+    if (filters.textQuery.trim()) {
+      const query = filters.textQuery.toLowerCase();
+      filtered = filtered.filter(business => 
+        business.name.toLowerCase().includes(query) ||
+        business.description.toLowerCase().includes(query) ||
+        business.metadata?.category?.toLowerCase().includes(query) ||
+        business.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
     }
+
+    // Category filter
+    if (filters.categories.length > 0) {
+      filtered = filtered.filter(business => 
+        business.metadata?.category && filters.categories.includes(business.metadata.category)
+      );
+    }
+
+    // Tags filter
+    if (filters.tags.length > 0) {
+      filtered = filtered.filter(business => 
+        business.tags?.some(tag => filters.tags.includes(tag))
+      );
+    }
+
+    // Location-based filtering
+    if (filters.location.type !== 'none' && filters.location.coordinates) {
+      const businessesWithDistance = findBusinessesNearLocation(
+        filtered,
+        filters.location.coordinates,
+        filters.location.radius
+      );
+      filtered = businessesWithDistance;
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
+        case 'distance':
+          if ('distance' in a && 'distance' in b) {
+            return (a as any).distance - (b as any).distance;
+          }
+          return 0;
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'name':
+        default:
+          return a.name.localeCompare(b.name, 'he');
+      }
+    });
+
+    return filtered;
+  }, [allBusinesses, filters]);
+
+  const handleFiltersChange = (newFilters: SearchFilters) => {
+    setFilters(newFilters);
   };
+
+  if (isLoading) {
+    return (
+      <div className="bg-gray-50 min-h-screen py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-16">
+            <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-teal-600 animate-spin mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              טוען עסקים...
+            </h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
@@ -115,7 +166,7 @@ export default function BusinessesPage() {
             עסקים מהקהילה
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            גלה עסקים מקומיים מחברי הקהילה שלנו, צור קשר ותמוך בעסקים קטנים
+            גלה עסקים מקומיים מחברי הקהילה שלנו, חפש לפי מיקום ותמוך בעסקים קטנים
           </p>
         </div>
 
@@ -159,117 +210,62 @@ export default function BusinessesPage() {
           </div>
         )}
 
-        {/* Businesses Grid */}
-        {businesses.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="bg-gray-100 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <FontAwesomeIcon icon={faBuilding} className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              אין עסקים זמינים
-            </h3>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-            {businesses.map((business) => (
-              <Link key={business.id} href={`/businesses/${business.id}`}>
-                <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer max-w-sm mx-auto">
-                  <div className="space-y-3">
-                    {/* Header with logo and title */}
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-teal-100 flex items-center justify-center flex-shrink-0">
-                        {business.metadata?.images?.logoUrl ? (
-                          <Image
-                            src={business.metadata.images.logoUrl}
-                            alt={`לוגו ${business.name}`}
-                            width={40}
-                            height={40}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <FontAwesomeIcon icon={faBuilding} className="w-5 h-5 text-teal-600" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">
-                          {business.name}
-                        </h3>
-                        <p className="text-xs text-teal-600 font-medium">
-                          {business.metadata?.category || 'עסק'}
-                        </p>
-                      </div>
-                    </div>
+        {/* Search and Filters */}
+        <BusinessSearchFilters
+          onFiltersChange={handleFiltersChange}
+          availableCategories={availableCategories}
+          availableTags={availableTags}
+          businessesCount={filteredBusinesses.length}
+          showMapToggle={true}
+        />
 
-                    {/* Status */}
-                    {(() => {
-                      const status = getBusinessStatus(business);
-                      return status ? (
-                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status.color} ${status.bgColor}`}>
-                          <FontAwesomeIcon icon={faClock} className="w-3 h-3 ml-1" />
-                          {status.status}
-                        </div>
-                      ) : null;
-                    })()}
-                    
-                    {/* Description */}
-                    <p className="text-gray-600 text-sm line-clamp-2">
-                      {business.description}
-                    </p>
-
-                    {/* Tags */}
-                    {business.tags && business.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {business.tags.slice(0, 3).map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {business.tags.length > 3 && (
-                          <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                            +{business.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Location */}
-                    <div className="flex items-center text-xs text-gray-500">
-                      <FontAwesomeIcon icon={faMapMarkerAlt} className="w-3 h-3 ml-1 flex-shrink-0" />
-                      <span className="truncate">
-                        {getLocationDisplayText(business.wazeUrl, business.serviceAreas)}
-                      </span>
-                    </div>
-                    
-                    {/* Contact Info */}
-                    {isApproved ? (
-                      <div className="space-y-1">
-                        {business.metadata?.contactInfo?.phone && (
-                          <div className="flex items-center text-xs text-gray-500">
-                            <FontAwesomeIcon icon={faPhone} className="w-3 h-3 ml-1 flex-shrink-0" />
-                            <span className="truncate">{business.metadata.contactInfo.phone}</span>
-                          </div>
-                        )}
-                        {business.metadata?.contactInfo?.email && (
-                          <div className="flex items-center text-xs text-gray-500">
-                            <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 ml-1 flex-shrink-0" />
-                            <span className="truncate">{business.metadata.contactInfo.email}</span>
-                          </div>
-                        )}
-                        <p className="text-xs text-gray-400">
-                          בעלים: {business.ownerName}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                </Card>
-              </Link>
-            ))}
+        {/* Map View */}
+        {filters.viewMode === 'map' && (
+          <div className="mb-8">
+            <BusinessMap
+              businesses={filteredBusinesses}
+              userLocation={filters.location.coordinates}
+              height="500px"
+              onBusinessClick={(business) => {
+                window.open(`/businesses/${business.id}`, '_blank');
+              }}
+            />
           </div>
         )}
 
+        {/* List View */}
+        {filters.viewMode === 'list' && (
+          <>
+            {filteredBusinesses.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="bg-gray-100 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <FontAwesomeIcon icon={faBuilding} className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {filters.textQuery || filters.categories.length > 0 || filters.tags.length > 0 || filters.location.type !== 'none'
+                    ? 'לא נמצאו עסקים התואמים לחיפוש'
+                    : 'אין עסקים זמינים'
+                  }
+                </h3>
+                {(filters.textQuery || filters.categories.length > 0 || filters.tags.length > 0 || filters.location.type !== 'none') && (
+                  <p className="text-gray-600">נסה לשנות את פרמטרי החיפוש או לנקות את הסינון</p>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                {filteredBusinesses.map((business) => (
+                  <EnhancedBusinessCard
+                    key={business.id}
+                    business={business}
+                    isApproved={isApproved}
+                    showDistance={filters.location.type !== 'none'}
+                    size="normal"
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
         {/* Stats Section */}
         <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
@@ -278,7 +274,7 @@ export default function BusinessesPage() {
           </h2>
           <div className="text-center">
             <div className="text-3xl font-bold text-teal-600 mb-2">
-              {businesses.length}
+              {allBusinesses.length}
             </div>
             <div className="text-gray-600">עסקים רשומים</div>
           </div>
