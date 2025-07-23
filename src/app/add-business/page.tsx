@@ -326,10 +326,11 @@ function AddBusinessPage() {
   };
 
   const nextStep = () => {
+    // Always scroll to top first to prevent scrolling issues
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, 5));
-      // Scroll to top on mobile to prevent scrolling issues
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
