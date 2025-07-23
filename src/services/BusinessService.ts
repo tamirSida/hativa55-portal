@@ -1,6 +1,7 @@
 import { Business, IBusiness } from '@/models/Business';
 import { BaseService } from './BaseService';
 import { where, orderBy, QueryConstraint } from 'firebase/firestore';
+import { enhanceBusinessLocation } from '@/utils/businessLocationEnhancer';
 
 export class BusinessService extends BaseService<Business> {
   constructor() {
@@ -13,7 +14,34 @@ export class BusinessService extends BaseService<Business> {
 
   public async createBusiness(businessData: Omit<IBusiness, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     const business = new Business(businessData);
-    return await this.create(business.toFirestore() as Omit<Business, 'id'>);
+    const businessId = await this.create(business.toFirestore() as Omit<Business, 'id'>);
+    
+    // Automatically enhance location after business creation
+    try {
+      console.log(`Auto-enhancing location for new business: ${business.name}`);
+      const enhancedBusiness = await this.getById(businessId);
+      if (enhancedBusiness) {
+        const locationData = await enhanceBusinessLocation(enhancedBusiness);
+        if (locationData) {
+          console.log(`Successfully enhanced location for: ${business.name}`);
+          // Update business with enhanced location data
+          await this.update(businessId, {
+            metadata: {
+              ...enhancedBusiness.metadata,
+              location: locationData
+            },
+            updatedAt: new Date()
+          });
+        } else {
+          console.warn(`No location data available for: ${business.name}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to auto-enhance location for business ${business.name}:`, error);
+      // Don't throw error - business creation should still succeed even if location enhancement fails
+    }
+    
+    return businessId;
   }
 
   public async getBusinessesByOwner(ownerId: string): Promise<Business[]> {
@@ -84,22 +112,6 @@ export class BusinessService extends BaseService<Business> {
       );
     } catch (error) {
       throw new Error(`Failed to get businesses in service area: ${error}`);
-    }
-  }
-
-  public async searchBusinesses(searchTerm: string): Promise<Business[]> {
-    try {
-      const allBusinesses = await this.getActiveBusinesses();
-      const lowercaseSearch = searchTerm.toLowerCase();
-      
-      return allBusinesses.filter(business => 
-        business.name.toLowerCase().includes(lowercaseSearch) ||
-        business.description.toLowerCase().includes(lowercaseSearch) ||
-        business.category.toLowerCase().includes(lowercaseSearch) ||
-        business.tags.some(tag => tag.toLowerCase().includes(lowercaseSearch))
-      );
-    } catch (error) {
-      throw new Error(`Failed to search businesses: ${error}`);
     }
   }
 

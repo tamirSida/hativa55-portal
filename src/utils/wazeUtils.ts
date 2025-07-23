@@ -31,8 +31,12 @@ export function parseWazeUrl(url: string): ParsedWazeLocation | null {
     let extractedAddress: string | undefined;
     
     if (hebrewAddressMatch) {
-      extractedAddress = hebrewAddressMatch[1].trim();
-      console.log('Extracted address from Hebrew text:', extractedAddress);
+      const rawAddress = hebrewAddressMatch[1].trim();
+      console.log('Extracted raw address from Hebrew text:', rawAddress);
+      
+      // Clean the address by removing business name and keeping only street address
+      extractedAddress = cleanAddressFromBusinessName(rawAddress);
+      console.log('Cleaned address:', extractedAddress);
     }
     
     // Normalize URL first to handle malformed URLs
@@ -224,6 +228,51 @@ export function normalizeWazeUrl(url: string): string {
     console.warn('Failed to normalize Waze URL:', error);
     return '';
   }
+}
+
+/**
+ * Clean address by removing business name and keeping only street address
+ * Examples:
+ * "פיצה סלייס, סוקולוב 72, רמת השרון" -> "סוקולוב 72, רמת השרון"
+ * "מקדונלד'ס, דיזנגוף 50, תל אביב" -> "דיזנגוף 50, תל אביב"
+ * "רחוב הרצל 15, ירושלים" -> "רחוב הרצל 15, ירושלים" (no change)
+ */
+function cleanAddressFromBusinessName(address: string): string {
+  if (!address) return address;
+  
+  const parts = address.split(',').map(part => part.trim());
+  
+  // If we have at least 2 parts, check if the first part looks like a business name
+  if (parts.length >= 2) {
+    const firstPart = parts[0];
+    const secondPart = parts[1];
+    
+    // Check if second part contains a street number (indicates it's a street address)
+    // Hebrew pattern: street name + number
+    const hasStreetNumber = /\d+/.test(secondPart);
+    
+    // Check if first part looks like a business name:
+    // - Contains business keywords (פיצה, מקדונלד, קפה, etc.)
+    // - Or doesn't contain street indicators (רחוב, שדרות, etc.)
+    const businessKeywords = ['פיצה', 'מקדונלד', 'בורגר', 'קפה', 'מסעדת', 'בית קפה', 'פלפל', 'סבארו'];
+    const streetKeywords = ['רחוב', 'שדרות', 'כיכר', 'מושבה', 'דרך', 'נחל', 'הר'];
+    
+    const hasBusinessKeyword = businessKeywords.some(keyword => 
+      firstPart.toLowerCase().includes(keyword.toLowerCase())
+    );
+    const hasStreetKeyword = streetKeywords.some(keyword => 
+      firstPart.includes(keyword)
+    );
+    
+    // If first part looks like business name and second part has street number,
+    // remove the first part (business name)
+    if (hasStreetNumber && (hasBusinessKeyword || !hasStreetKeyword)) {
+      return parts.slice(1).join(', ');
+    }
+  }
+  
+  // Return original address if no cleaning is needed
+  return address;
 }
 
 /**

@@ -67,7 +67,8 @@ export default function RegisterPage() {
         return !!(formData.name && formData.email && formData.password && 
                  formData.confirmPassword && formData.identityId &&
                  formData.password === formData.confirmPassword &&
-                 formData.identityId.length === 9);
+                 formData.identityId.length === 9 &&
+                 /^\d{9}$/.test(formData.identityId));
       case 2:
         return !!(formData.phone && formData.city && formData.gdud);
       default:
@@ -168,7 +169,7 @@ export default function RegisterPage() {
         required
         placeholder="123456789"
         maxLength={9}
-        pattern="\\d{9}"
+        inputMode="numeric"
       />
 
       <div className="relative">

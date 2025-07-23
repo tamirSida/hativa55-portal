@@ -43,6 +43,7 @@ export const ISRAELI_SERVICE_AREAS = {
   // Special Areas (Tier 3)
   "כל הארץ": { lat: 31.5, lng: 35.0, radius: 200 },
   "אזור המרכז": { lat: 32.0, lng: 34.8, radius: 35 },
+  "מרכז הארץ": { lat: 32.0, lng: 34.8, radius: 35 }, // Alternative name for center of Israel
   "אזור הצפון": { lat: 32.8, lng: 35.2, radius: 50 },
   "אזור הדרום": { lat: 31.2, lng: 34.8, radius: 80 }
 } as const;
