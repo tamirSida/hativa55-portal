@@ -213,21 +213,21 @@ export default function BusinessSearchFilters({
   ].reduce((sum, count) => sum + (typeof count === 'number' ? count : count ? 1 : 0), 0);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+    <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6 mb-6">
       {/* Main Search Row */}
-      <div className="flex flex-col md:flex-row gap-4 mb-4">
+      <div className="space-y-3 sm:space-y-0 sm:flex sm:gap-4 mb-4">
         {/* Text Search */}
         <div className="flex-1 relative">
           <FontAwesomeIcon 
             icon={faSearch} 
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" 
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" 
           />
           <input
             type="text"
-            placeholder="חפש עסקים, שירותים, או מילות מפתח..."
+            placeholder="חפש עסקים, שירותים..."
             value={filters.textQuery}
             onChange={(e) => handleTextSearch(e.target.value)}
-            className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full pl-4 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
 
@@ -235,11 +235,11 @@ export default function BusinessSearchFilters({
         <div className="flex-1 relative">
           <FontAwesomeIcon 
             icon={faMapMarkerAlt} 
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" 
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" 
           />
           <input
             type="text"
-            placeholder="מיקום או אזור (תל אביב, גוש דן...)"
+            placeholder="מיקום (תל אביב, גוש דן...)"
             value={locationInput}
             onChange={(e) => setLocationInput(e.target.value)}
             onKeyDown={(e) => {
@@ -247,7 +247,7 @@ export default function BusinessSearchFilters({
                 handleLocationSearch(locationInput);
               }
             }}
-            className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="w-full pl-12 sm:pl-4 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             disabled={locationLoading}
           />
           
@@ -256,10 +256,10 @@ export default function BusinessSearchFilters({
             {filters.location.type !== 'none' && (
               <button
                 onClick={clearLocation}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors touch-manipulation"
                 title="נקה מיקום"
               >
-                <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
+                <FontAwesomeIcon icon={faTimes} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             )}
             
@@ -267,12 +267,12 @@ export default function BusinessSearchFilters({
               <button
                 onClick={handleGetCurrentLocation}
                 disabled={locationLoading}
-                className="p-1 text-teal-500 hover:text-teal-600 transition-colors disabled:opacity-50"
+                className="p-1.5 sm:p-1 text-teal-500 hover:text-teal-600 transition-colors disabled:opacity-50 touch-manipulation"
                 title="השתמש במיקום הנוכחי"
               >
                 <FontAwesomeIcon 
                   icon={faLocationCrosshairs} 
-                  className={`w-4 h-4 ${locationLoading ? 'animate-spin' : ''}`} 
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${locationLoading ? 'animate-spin' : ''}`} 
                 />
               </button>
             )}
@@ -281,28 +281,28 @@ export default function BusinessSearchFilters({
 
         {/* View Mode Toggle */}
         {showMapToggle && (
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 rounded-lg p-1 sm:w-auto w-full">
             <button
               onClick={() => updateFilters({ viewMode: 'list' })}
-              className={`px-4 py-2 rounded-md transition-colors ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md transition-colors text-sm ${
                 filters.viewMode === 'list'
                   ? 'bg-white text-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              <FontAwesomeIcon icon={faList} className="w-4 h-4 ml-2" />
-              רשימה
+              <FontAwesomeIcon icon={faList} className="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
+              <span className="hidden sm:inline">רשימה</span>
             </button>
             <button
               onClick={() => updateFilters({ viewMode: 'map' })}
-              className={`px-4 py-2 rounded-md transition-colors ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md transition-colors text-sm ${
                 filters.viewMode === 'map'
                   ? 'bg-white text-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              <FontAwesomeIcon icon={faMap} className="w-4 h-4 ml-2" />
-              מפה
+              <FontAwesomeIcon icon={faMap} className="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
+              <span className="hidden sm:inline">מפה</span>
             </button>
           </div>
         )}
@@ -311,27 +311,31 @@ export default function BusinessSearchFilters({
       {/* Current Location Display */}
       {filters.location.type !== 'none' && (
         <div className="mb-4 p-3 bg-teal-50 border border-teal-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 text-teal-600" />
-              <span className="text-teal-800 font-medium">
-                מציג עסקים ב{filters.location.address}
-              </span>
-              <span className="text-teal-600 text-sm">
-                (רדיוס {filters.location.radius}ק"מ)
-              </span>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 flex-1 min-w-0">
+              <FontAwesomeIcon icon={faMapMarkerAlt} className="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                  <span className="text-teal-800 font-medium text-sm sm:text-base truncate">
+                    מציג עסקים ב{filters.location.address}
+                  </span>
+                  <span className="text-teal-600 text-xs sm:text-sm">
+                    (רדיוס {filters.location.radius}ק"מ)
+                  </span>
+                </div>
+              </div>
             </div>
             <button
               onClick={clearLocation}
-              className="text-teal-600 hover:text-teal-800 transition-colors"
+              className="text-teal-600 hover:text-teal-800 transition-colors p-1 touch-manipulation flex-shrink-0"
             >
-              <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
+              <FontAwesomeIcon icon={faTimes} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
           
           {/* Radius Slider */}
-          <div className="mt-3 flex items-center gap-3">
-            <span className="text-sm text-teal-700">רדיוס חיפוש:</span>
+          <div className="mt-3 flex items-center gap-2 sm:gap-3">
+            <span className="text-xs sm:text-sm text-teal-700 flex-shrink-0">רדיוס:</span>
             <input
               type="range"
               min="1"
@@ -340,9 +344,9 @@ export default function BusinessSearchFilters({
               onChange={(e) => updateFilters({
                 location: { ...filters.location, radius: parseInt(e.target.value) }
               })}
-              className="flex-1 h-2 bg-teal-200 rounded-lg appearance-none cursor-pointer"
+              className="flex-1 h-2 bg-teal-200 rounded-lg appearance-none cursor-pointer touch-manipulation"
             />
-            <span className="text-sm font-medium text-teal-700 min-w-[50px]">
+            <span className="text-xs sm:text-sm font-medium text-teal-700 min-w-[35px] sm:min-w-[50px] text-center">
               {filters.location.radius}ק"מ
             </span>
           </div>
@@ -350,13 +354,13 @@ export default function BusinessSearchFilters({
       )}
 
       {/* Advanced Filters Toggle */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
         <button
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors touch-manipulation"
         >
           <FontAwesomeIcon icon={faFilter} className="w-4 h-4" />
-          <span>סינון מתקדם</span>
+          <span className="text-sm sm:text-base">סינון מתקדם</span>
           {activeFiltersCount > 0 && (
             <span className="bg-teal-500 text-white text-xs px-2 py-1 rounded-full">
               {activeFiltersCount}
@@ -364,12 +368,12 @@ export default function BusinessSearchFilters({
           )}
         </button>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
           {/* Sort Options */}
           <select
             value={filters.sortBy}
             onChange={(e) => updateFilters({ sortBy: e.target.value as any })}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-xs sm:text-sm"
           >
             <option value="name">מיון לפי שם</option>
             <option value="distance" disabled={filters.location.type === 'none'}>
@@ -378,21 +382,24 @@ export default function BusinessSearchFilters({
             <option value="newest">מיון לפי חדשים</option>
           </select>
 
-          {/* Results Count */}
-          <span className="text-sm text-gray-600">
-            {businessesCount} עסקים
-          </span>
+          <div className="flex items-center justify-between sm:gap-4">
+            {/* Results Count */}
+            <span className="text-xs sm:text-sm text-gray-600">
+              {businessesCount} עסקים
+            </span>
 
-          {/* Clear All Filters */}
-          {activeFiltersCount > 0 && (
-            <Button
-              onClick={clearAllFilters}
-              variant="outline"
-              size="sm"
-            >
-              נקה הכל
-            </Button>
-          )}
+            {/* Clear All Filters */}
+            {activeFiltersCount > 0 && (
+              <Button
+                onClick={clearAllFilters}
+                variant="outline"
+                size="sm"
+                className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2"
+              >
+                נקה הכל
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -402,16 +409,16 @@ export default function BusinessSearchFilters({
           {/* Categories */}
           {availableCategories.length > 0 && (
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">קטגוריות</h4>
-              <div className="flex flex-wrap gap-2">
+              <h4 className="font-medium text-gray-900 mb-3 text-sm sm:text-base">קטגוריות</h4>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {availableCategories.map(category => (
                   <button
                     key={category}
                     onClick={() => handleCategoryToggle(category)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    className={`px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
                       filters.categories.includes(category)
                         ? 'bg-teal-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
                     }`}
                   >
                     {category}
@@ -424,23 +431,23 @@ export default function BusinessSearchFilters({
           {/* Tags */}
           {availableTags.length > 0 && (
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">תגיות</h4>
-              <div className="flex flex-wrap gap-2">
+              <h4 className="font-medium text-gray-900 mb-3 text-sm sm:text-base">תגיות</h4>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {availableTags.slice(0, 12).map(tag => (
                   <button
                     key={tag}
                     onClick={() => handleTagToggle(tag)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    className={`px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
                       filters.tags.includes(tag)
                         ? 'bg-purple-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300'
                     }`}
                   >
                     {tag}
                   </button>
                 ))}
                 {availableTags.length > 12 && (
-                  <span className="text-sm text-gray-500 px-3 py-1">
+                  <span className="text-xs sm:text-sm text-gray-500 px-2.5 sm:px-3 py-1.5 sm:py-1">
                     +{availableTags.length - 12} נוספות
                   </span>
                 )}
