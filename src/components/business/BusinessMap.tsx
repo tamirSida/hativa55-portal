@@ -59,6 +59,7 @@ export default function BusinessMap({
   const [openPopupId, setOpenPopupId] = useState<string | null>(null);
   const [hoveredBusiness, setHoveredBusiness] = useState<(Business & { distance?: number }) | null>(null);
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null);
+  const [markerRefs, setMarkerRefs] = useState<{ [key: string]: any }>({});
 
   // Detect mobile device
   useEffect(() => {
@@ -225,16 +226,32 @@ export default function BusinessMap({
           }
 
           const handleMarkerClick = (e: any) => {
+            console.log('Marker clicked:', business.name, 'isMobile:', isMobile, 'openPopupId:', openPopupId);
+            
+            // Prevent default Leaflet popup behavior
+            e.originalEvent.stopPropagation();
+            
             if (isMobile) {
               // Mobile: First tap shows popup, second tap goes to business
               if (openPopupId === business.id) {
+                console.log('Second tap - navigating to business');
                 // Popup is already open, navigate to business
+                setOpenPopupId(null); // Close popup first
                 window.open(`/businesses/${business.id}`, '_blank');
               } else {
-                // Show popup
+                console.log('First tap - showing popup');
+                // Close any other open popups and show this one
                 setOpenPopupId(business.id);
+                // Force the marker to open its popup
+                setTimeout(() => {
+                  const marker = e.target;
+                  if (marker && marker.openPopup) {
+                    marker.openPopup();
+                  }
+                }, 50);
               }
             } else {
+              console.log('Desktop click - navigating directly');
               // Desktop: Click goes directly to business
               window.open(`/businesses/${business.id}`, '_blank');
             }
@@ -274,72 +291,139 @@ export default function BusinessMap({
                 mouseout: handleMarkerMouseOut
               }}
             >
-              {openPopupId === business.id && (
-                <Popup
-                  closeButton={true}
-                  className="custom-popup"
-                  eventHandlers={{
-                    remove: () => setOpenPopupId(null)
-                  }}
-                >
-                <div className="w-full max-w-[280px] sm:max-w-xs">
-                  <div className="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-                    {business.metadata?.images?.logoUrl && (
-                      <img
-                        src={business.metadata.images.logoUrl}
-                        alt={`לוגו ${business.name}`}
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base line-clamp-2">
-                        {business.name}
-                      </h3>
-                      <p className="text-xs text-teal-600 font-medium">
-                        {business.metadata?.category || 'עסק'}
-                      </p>
+              {/* Popup - always rendered but content varies by device */}
+              <Popup
+                closeButton={isMobile}
+                className={isMobile ? "mobile-popup" : "desktop-popup"}
+                eventHandlers={{
+                  remove: () => setOpenPopupId(null)
+                }}
+              >
+                {isMobile ? (
+                  /* Mobile popup content */
+                  <div className="w-full max-w-[300px]">
+                    <div className="flex items-start gap-3 mb-3">
+                      {business.metadata?.images?.logoUrl && (
+                        <img
+                          src={business.metadata.images.logoUrl}
+                          alt={`לוגו ${business.name}`}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 mb-1 text-base leading-tight">
+                          {business.name}
+                        </h3>
+                        <p className="text-sm text-teal-600 font-medium">
+                          {business.metadata?.category || 'עסק'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
-                    {business.description}
-                  </p>
-
-                  {business.distance !== undefined && (
-                    <p className="text-xs text-gray-500 mb-2">
-                      מרחק: {business.distance < 1 
-                        ? `${Math.round(business.distance * 1000)}מ'` 
-                        : `${business.distance.toFixed(1)}ק"מ`
-                      }
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-3 leading-relaxed">
+                      {business.description}
                     </p>
-                  )}
 
-                  <div className="flex gap-1.5 sm:gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(`/businesses/${business.id}`, '_blank');
-                      }}
-                      className="flex-1 px-2 sm:px-3 py-1.5 sm:py-1 bg-teal-500 text-white text-xs rounded-md hover:bg-teal-600 transition-colors touch-manipulation"
-                    >
-                      פרטים
-                    </button>
-                    
-                    {business.wazeUrl && (
+                    {business.distance !== undefined && (
+                      <p className="text-sm text-gray-500 mb-3 font-medium">
+                        מרחק: {business.distance < 1 
+                          ? `${Math.round(business.distance * 1000)}מ'` 
+                          : `${business.distance.toFixed(1)}ק"מ`
+                        }
+                      </p>
+                    )}
+
+                    <div className="flex gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.open(business.wazeUrl, '_blank');
+                          window.open(`/businesses/${business.id}`, '_blank');
                         }}
-                        className="flex-1 px-2 sm:px-3 py-1.5 sm:py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-colors touch-manipulation"
+                        className="flex-1 px-4 py-2.5 bg-teal-500 text-white text-sm font-medium rounded-lg hover:bg-teal-600 transition-colors touch-manipulation"
                       >
-                        נווט
+                        צפה בפרטים
                       </button>
-                    )}
+                      
+                      {business.wazeUrl && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(business.wazeUrl, '_blank');
+                          }}
+                          className="flex-1 px-4 py-2.5 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors touch-manipulation"
+                        >
+                          נווט
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Tap again hint */}
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-xs text-gray-500 text-center">
+                        או הקש על הסמן שוב כדי לעבור לדף העסק
+                      </p>
+                    </div>
                   </div>
-                </div>
-                </Popup>
-              )}
+                ) : (
+                  /* Desktop popup content */
+                  <div className="w-full max-w-xs">
+                    <div className="flex items-start gap-3 mb-2">
+                      {business.metadata?.images?.logoUrl && (
+                        <img
+                          src={business.metadata.images.logoUrl}
+                          alt={`לוגו ${business.name}`}
+                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 mb-1 text-base line-clamp-2">
+                          {business.name}
+                        </h3>
+                        <p className="text-xs text-teal-600 font-medium">
+                          {business.metadata?.category || 'עסק'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      {business.description}
+                    </p>
+
+                    {business.distance !== undefined && (
+                      <p className="text-xs text-gray-500 mb-2">
+                        מרחק: {business.distance < 1 
+                          ? `${Math.round(business.distance * 1000)}מ'` 
+                          : `${business.distance.toFixed(1)}ק"מ`
+                        }
+                      </p>
+                    )}
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(`/businesses/${business.id}`, '_blank');
+                        }}
+                        className="flex-1 px-3 py-1 bg-teal-500 text-white text-xs rounded-md hover:bg-teal-600 transition-colors"
+                      >
+                        פרטים
+                      </button>
+                      
+                      {business.wazeUrl && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(business.wazeUrl, '_blank');
+                          }}
+                          className="flex-1 px-3 py-1 bg-blue-500 text-white text-xs rounded-md hover:bg-blue-600 transition-colors"
+                        >
+                          נווט
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </Popup>
             </Marker>
           );
         })}
