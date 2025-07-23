@@ -10,6 +10,7 @@ import {
   faSpinner,
   faUsers,
   faUserGraduate,
+  faUserPlus,
   faPhone,
   faEnvelope,
   faMapMarkerAlt,
@@ -549,7 +550,7 @@ function StudentsPage() {
                       size="sm"
                       className="w-full"
                     >
-                      <FontAwesomeIcon icon={faPhone} className="w-4 h-4 ml-2" />
+                      <FontAwesomeIcon icon={faUserPlus} className="w-4 h-4 ml-2" />
                       התחבר
                     </Button>
                   )}
