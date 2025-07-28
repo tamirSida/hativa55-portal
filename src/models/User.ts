@@ -9,6 +9,8 @@ export interface IUser {
   bio?: string;
   profilePictureUrl?: string;
   profilePicturePublicId?: string;
+  originalProfilePictureUrl?: string;
+  originalProfilePicturePublicId?: string;
   hobbyTags: string[];
   mentorTags: string[];
   businessId?: string;
@@ -50,6 +52,8 @@ export class User implements IUser {
   public bio?: string;
   public profilePictureUrl?: string;
   public profilePicturePublicId?: string;
+  public originalProfilePictureUrl?: string;
+  public originalProfilePicturePublicId?: string;
   public hobbyTags: string[];
   public mentorTags: string[];
   public businessId?: string;
@@ -74,6 +78,8 @@ export class User implements IUser {
     this.bio = data.bio;
     this.profilePictureUrl = data.profilePictureUrl;
     this.profilePicturePublicId = data.profilePicturePublicId;
+    this.originalProfilePictureUrl = data.originalProfilePictureUrl;
+    this.originalProfilePicturePublicId = data.originalProfilePicturePublicId;
     this.hobbyTags = data.hobbyTags || [];
     this.mentorTags = data.mentorTags || [];
     this.businessId = data.businessId;
@@ -205,15 +211,19 @@ export class User implements IUser {
     return false; // Placeholder - will be overridden by context
   }
 
-  public updateProfilePicture(url?: string, publicId?: string): void {
+  public updateProfilePicture(url?: string, publicId?: string, originalUrl?: string, originalPublicId?: string): void {
     this.profilePictureUrl = url;
     this.profilePicturePublicId = publicId;
+    this.originalProfilePictureUrl = originalUrl;
+    this.originalProfilePicturePublicId = originalPublicId;
     this.updatedAt = new Date();
   }
 
   public removeProfilePicture(): void {
     this.profilePictureUrl = undefined;
     this.profilePicturePublicId = undefined;
+    this.originalProfilePictureUrl = undefined;
+    this.originalProfilePicturePublicId = undefined;
     this.updatedAt = new Date();
   }
 
@@ -232,6 +242,8 @@ export class User implements IUser {
       bio: this.bio || '',
       profilePictureUrl: this.profilePictureUrl || '',
       profilePicturePublicId: this.profilePicturePublicId || '',
+      originalProfilePictureUrl: this.originalProfilePictureUrl || '',
+      originalProfilePicturePublicId: this.originalProfilePicturePublicId || '',
       hobbyTags: this.hobbyTags || [],
       mentorTags: this.mentorTags || [],
       businessId: this.businessId || '',

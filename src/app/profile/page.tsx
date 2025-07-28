@@ -71,12 +71,12 @@ function ProfilePage() {
     }
   };
 
-  const handleProfilePictureUpload = async (url: string, publicId: string) => {
+  const handleProfilePictureUpload = async (url: string, publicId: string, originalUrl: string, originalPublicId: string) => {
     if (!user) return;
     
     try {
       const userService = new UserService();
-      await userService.updateProfilePicture(user.id, url, publicId);
+      await userService.updateProfilePicture(user.id, url, publicId, originalUrl, originalPublicId);
       await refreshUserProfile(); // Refresh user data to show new picture
     } catch (error) {
       console.error('Failed to update profile picture:', error);
@@ -117,6 +117,8 @@ function ProfilePage() {
             <ProfilePictureUpload
               currentImageUrl={user.profilePictureUrl}
               currentImagePublicId={user.profilePicturePublicId}
+              originalImageUrl={user.originalProfilePictureUrl}
+              originalImagePublicId={user.originalProfilePicturePublicId}
               onImageUpload={handleProfilePictureUpload}
               onImageRemove={handleProfilePictureRemove}
               size="large"

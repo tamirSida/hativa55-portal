@@ -40,6 +40,8 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [initialPinchDistance, setInitialPinchDistance] = useState<number | null>(null);
+  const [initialPinchScale, setInitialPinchScale] = useState(1);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -117,6 +119,17 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
     drawImage();
   }, [drawImage]);
 
+  // Helper function to get distance between two touch points
+  const getTouchDistance = (touches: TouchList): number => {
+    if (touches.length < 2) return 0;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    return Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) + 
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    );
+  };
+
   // Mouse/touch event handlers
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
@@ -147,6 +160,65 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
   const handlePointerUp = () => {
     setIsDragging(false);
+  };
+
+  // Touch handlers for pinch-to-zoom
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Two fingers - start pinch
+      e.preventDefault();
+      const distance = getTouchDistance(e.touches);
+      setInitialPinchDistance(distance);
+      setInitialPinchScale(imageState.scale);
+      setIsDragging(false); // Stop dragging when pinching
+    } else if (e.touches.length === 1) {
+      // Single finger - start drag
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (rect) {
+        setDragStart({
+          x: e.touches[0].clientX - rect.left - imageState.x,
+          y: e.touches[0].clientY - rect.top - imageState.y
+        });
+        setIsDragging(true);
+      }
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && initialPinchDistance) {
+      // Pinch zoom
+      e.preventDefault();
+      const currentDistance = getTouchDistance(e.touches);
+      const scaleChange = currentDistance / initialPinchDistance;
+      const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, initialPinchScale * scaleChange));
+      
+      setImageState(prev => ({
+        ...prev,
+        scale: newScale
+      }));
+    } else if (e.touches.length === 1 && isDragging && canvasRef.current) {
+      // Single finger drag
+      e.preventDefault();
+      const rect = canvasRef.current.getBoundingClientRect();
+      const newX = e.touches[0].clientX - rect.left - dragStart.x;
+      const newY = e.touches[0].clientY - rect.top - dragStart.y;
+      
+      setImageState(prev => ({
+        ...prev,
+        x: newX,
+        y: newY
+      }));
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length < 2) {
+      setInitialPinchDistance(null);
+      setInitialPinchScale(1);
+    }
+    if (e.touches.length === 0) {
+      setIsDragging(false);
+    }
   };
 
   // Zoom handlers
@@ -254,55 +326,79 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
               width={CANVAS_SIZE}
               height={CANVAS_SIZE}
               className="border border-gray-200 rounded-full cursor-move touch-none"
+              style={{ touchAction: 'none' }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             />
           </div>
           
           {/* Instructions */}
           <div className="text-center text-sm text-gray-500 mb-4">
             {typeof window !== 'undefined' && 'ontouchstart' in window 
-              ? 'גע וגרור להזזה • השתמש בכפתורים לזום'
+              ? 'גע וגרור להזזה • צבט לזום'
               : 'גרור להזזה • השתמש בכפתורים לזום'
             }
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleZoom(-0.1)}
-              disabled={imageState.scale <= MIN_SCALE}
-            >
-              <FontAwesomeIcon icon={faSearchMinus} className="w-4 h-4" />
-            </Button>
-            
-            <div className="text-sm text-gray-600 min-w-16 text-center">
-              {Math.round(imageState.scale * 100)}%
+          {/* Controls - Desktop only */}
+          {typeof window !== 'undefined' && !('ontouchstart' in window) && (
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleZoom(-0.1)}
+                disabled={imageState.scale <= MIN_SCALE}
+              >
+                <FontAwesomeIcon icon={faSearchMinus} className="w-4 h-4" />
+              </Button>
+              
+              <div className="text-sm text-gray-600 min-w-16 text-center">
+                {Math.round(imageState.scale * 100)}%
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleZoom(0.1)}
+                disabled={imageState.scale >= MAX_SCALE}
+              >
+                <FontAwesomeIcon icon={faSearchPlus} className="w-4 h-4" />
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+                className="mr-2"
+              >
+                <FontAwesomeIcon icon={faRedo} className="w-4 h-4 ml-1" />
+                איפוס
+              </Button>
             </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleZoom(0.1)}
-              disabled={imageState.scale >= MAX_SCALE}
-            >
-              <FontAwesomeIcon icon={faSearchPlus} className="w-4 h-4" />
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              className="mr-2"
-            >
-              <FontAwesomeIcon icon={faRedo} className="w-4 h-4 ml-1" />
-              איפוס
-            </Button>
-          </div>
+          )}
+
+          {/* Mobile-only controls */}
+          {typeof window !== 'undefined' && 'ontouchstart' in window && (
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="text-sm text-gray-600 text-center">
+                {Math.round(imageState.scale * 100)}%
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+              >
+                <FontAwesomeIcon icon={faRedo} className="w-4 h-4 ml-1" />
+                איפוס
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Actions */}

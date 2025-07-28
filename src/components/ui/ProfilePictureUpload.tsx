@@ -12,7 +12,9 @@ import { CLOUDINARY_CONFIG } from '@/config/cloudinary';
 interface ProfilePictureUploadProps {
   currentImageUrl?: string;
   currentImagePublicId?: string;
-  onImageUpload: (url: string, publicId: string) => void;
+  originalImageUrl?: string;
+  originalImagePublicId?: string;
+  onImageUpload: (url: string, publicId: string, originalUrl: string, originalPublicId: string) => void;
   onImageRemove: () => void;
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
@@ -28,6 +30,8 @@ const SIZES = {
 export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
   currentImageUrl,
   currentImagePublicId,
+  originalImageUrl,
+  originalImagePublicId,
   onImageUpload,
   onImageRemove,
   size = 'medium',
@@ -42,18 +46,31 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cloudinaryService = new ClientCloudinaryService();
 
-  const processFile = async (file: File) => {
+  const processFile = async (originalFile: File, croppedFile: File) => {
     setIsUploading(true);
     setUploadError(null);
 
     try {
-      const result = await cloudinaryService.uploadImage({
-        file,
+      // Upload original image first
+      const originalResult = await cloudinaryService.uploadImage({
+        file: originalFile,
+        folder: CLOUDINARY_CONFIG.FOLDERS.USER_PROFILES + '/originals',
+        resourceType: 'image'
+      });
+
+      // Upload cropped image
+      const croppedResult = await cloudinaryService.uploadImage({
+        file: croppedFile,
         folder: CLOUDINARY_CONFIG.FOLDERS.USER_PROFILES,
         resourceType: 'image'
       });
 
-      onImageUpload(result.secureUrl, result.publicId);
+      onImageUpload(
+        croppedResult.secureUrl, 
+        croppedResult.publicId,
+        originalResult.secureUrl,
+        originalResult.publicId
+      );
     } catch (error) {
       console.error('Profile picture upload error:', error);
       setUploadError(error instanceof Error ? error.message : 'שגיאה בהעלאת התמונה');
@@ -81,9 +98,11 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
   };
 
   const handleCropComplete = async (croppedFile: File) => {
+    if (!selectedFile) return;
     setShowCropModal(false);
+    const originalFile = selectedFile;
     setSelectedFile(null);
-    await processFile(croppedFile);
+    await processFile(originalFile, croppedFile);
   };
 
   const handleCropCancel = () => {
@@ -96,12 +115,17 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
   };
 
   const handleEditClick = () => {
-    if (disabled || isUploading || !currentImageUrl) return;
-    // Convert current image URL to file for editing
-    fetch(currentImageUrl)
+    if (disabled || isUploading) return;
+    
+    // Use original image if available, fallback to current image
+    const imageUrlToEdit = originalImageUrl || currentImageUrl;
+    if (!imageUrlToEdit) return;
+    
+    // Convert original image URL to file for editing
+    fetch(imageUrlToEdit)
       .then(res => res.blob())
       .then(blob => {
-        const file = new File([blob], 'profile-picture.jpg', { type: blob.type });
+        const file = new File([blob], 'profile-picture-original.jpg', { type: blob.type });
         setSelectedFile(file);
         setShowCropModal(true);
       })
@@ -161,12 +185,7 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
           isDragOver 
             ? 'border-teal-400 border-dashed bg-teal-50' 
             : 'border-gray-200'
-        } ${
-          !disabled 
-            ? 'cursor-pointer hover:border-teal-300' 
-            : ''
         }`}
-        onClick={handleUploadClick}
         onDragOver={supportsDragDrop ? handleDragOver : undefined}
         onDragLeave={supportsDragDrop ? handleDragLeave : undefined}
         onDrop={supportsDragDrop ? handleDrop : undefined}
@@ -189,15 +208,14 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
           </div>
         )}
         
-        {/* Upload Overlay */}
-        {!disabled && (
+        {/* Upload Overlay - Only show during drag or upload */}
+        {!disabled && (isDragOver || isUploading) && (
           <div 
-            className={`absolute inset-0 flex items-center justify-center cursor-pointer transition-all duration-200 ${
+            className={`absolute inset-0 flex items-center justify-center transition-all duration-200 ${
               isDragOver 
                 ? 'bg-teal-500 bg-opacity-80 opacity-100' 
-                : 'bg-black bg-opacity-50 opacity-0 hover:opacity-100'
+                : 'bg-black bg-opacity-50 opacity-100'
             }`}
-            onClick={handleUploadClick}
           >
             {isUploading ? (
               <FontAwesomeIcon icon={faSpinner} className="text-white text-lg animate-spin" />
@@ -206,9 +224,7 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                 <FontAwesomeIcon icon={faCamera} className="text-xl mb-1" />
                 <div className="text-xs font-medium">שחרר לכאן</div>
               </div>
-            ) : (
-              <FontAwesomeIcon icon={faCamera} className="text-white text-lg" />
-            )}
+            ) : null}
           </div>
         )}
       </div>
