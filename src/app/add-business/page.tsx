@@ -21,6 +21,7 @@ import { Button, Card } from '@/components/ui';
 import { SERVICE_AREAS } from '@/utils/israeliData';
 import { ClientCloudinaryService } from '@/services/ClientCloudinaryService';
 import { BusinessService } from '@/services/BusinessService';
+import { BusinessManager } from '@/models/Business';
 import { useAuth } from '@/hooks/useAuth';
 
 interface BusinessFormData {
@@ -42,61 +43,10 @@ interface BusinessFormData {
   tags: string[];
 }
 
-const categories = [
-  'מסעדנות ואוכל',
-  'טכנולוגיה ומחשבים',
-  'עיצוב ואדריכלות',
-  'שירותים משפטיים',
-  'בריאות ורפואה',
-  'יופי וטיפוח',
-  'חינוך והדרכה',
-  'בידור ותרבות',
-  'ספורט וכושר',
-  'שירותי בית',
-  'רכב ותחבורה',
-  'כספים וביטוח',
-  'קניות ומסחר',
-  'תיירות ונופש',
-  'אחר'
-];
-
-const popularServices = [
-  'משלוח עד הבית',
-  'פרטות חנייה',
-  'גישה לנכים',
-  'אמצעי תשלום אלקטרוני',
-  'שירות 24 שעות',
-  'ייעוץ ללא תשלום',
-  'אחריות מורחבת',
-  'שירות ללקוחות VIP',
-  'הזמנות מראש',
-  'אירועים פרטיים',
-  'פתוח בשבת',
-  'כשר'
-];
-
-const popularTags = [
-  'איכותי',
-  'מהיר',
-  'אמין',
-  'מקצועי',
-  'ידידותי',
-  'חדשני',
-  'זול',
-  'יקר',
-  'בוטיק',
-  'משפחתי',
-  'מקומי',
-  'אורגני',
-  'טבעוני',
-  'כשר',
-  'מומלץ',
-  'פופולרי',
-  'ייחודי',
-  'אישי',
-  'VIP',
-  'פרימיום'
-];
+// Get options from BusinessManager
+const categories = BusinessManager.getCategories();
+const popularServices = BusinessManager.getServices();
+const popularTags = BusinessManager.getTags();
 
 const daysOfWeek = [
   { key: 'sunday', label: 'ראשון' },

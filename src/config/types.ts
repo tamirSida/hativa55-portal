@@ -3,3 +3,9 @@ export interface EducationOptions {
   degrees: string[];
   universityJobs: string[];
 }
+
+export interface BusinessOptions {
+  categories: string[];
+  services: string[];
+  tags: string[];
+}

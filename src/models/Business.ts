@@ -1,3 +1,6 @@
+import businessOptions from '@/config/businessOptions.json';
+import type { BusinessOptions } from '@/config/types';
+
 export interface IBusiness {
   id: string;
   ownerId: string;
@@ -174,6 +177,42 @@ export class Business implements IBusiness {
       ...data,
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate() || new Date(),
+    });
+  }
+}
+
+export class BusinessManager {
+  private static options: BusinessOptions = businessOptions;
+
+  public static getCategories(): string[] {
+    return [...this.options.categories].sort((a, b) => a.localeCompare(b, 'he'));
+  }
+
+  public static getServices(): string[] {
+    return [...this.options.services].sort((a, b) => a.localeCompare(b, 'he'));
+  }
+
+  public static getTags(): string[] {
+    return [...this.options.tags].sort((a, b) => a.localeCompare(b, 'he'));
+  }
+
+  public static getAllOptions(): BusinessOptions {
+    return this.options;
+  }
+
+  public static createBusiness(
+    ownerId: string,
+    ownerName: string,
+    name: string,
+    description: string,
+    category?: string
+  ): Business {
+    return new Business({
+      ownerId,
+      ownerName,
+      name,
+      description,
+      metadata: category ? { category } : undefined
     });
   }
 }
