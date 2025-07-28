@@ -31,14 +31,25 @@ export const Navigation: React.FC<NavigationProps> = ({
   onOpenAuth 
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { user, firebaseUser, isAdmin, isAuthenticated, logout } = useAuth();
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setIsMobileMenuOpen(false); // Close mobile menu if open
+    setShowLogoutDialog(true);
+  };
+
+  const handleLogoutConfirm = async () => {
     try {
       await logout();
+      setShowLogoutDialog(false);
     } catch (error) {
       console.error('Logout failed:', error);
     }
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutDialog(false);
   };
 
   const toggleMobileMenu = () => {
@@ -156,7 +167,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleLogout}
+                  onClick={handleLogoutClick}
                   icon={faSignOutAlt}
                 >
                   התנתק
@@ -196,7 +207,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleLogout}
+                  onClick={handleLogoutClick}
                   icon={faSignOutAlt}
                   className="text-xs px-2 py-1"
                   aria-label="התנתק"
@@ -248,7 +259,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             {isAuthenticated && user && (
               <div className="pt-4 mt-4 border-t border-gray-200">
                 <button
-                  onClick={handleLogout}
+                  onClick={handleLogoutClick}
                   className="flex items-center w-full px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md transition-colors duration-200"
                 >
                   <FontAwesomeIcon icon={faSignOutAlt} className="w-4 h-4 ml-3" />
@@ -256,6 +267,37 @@ export const Navigation: React.FC<NavigationProps> = ({
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Dialog */}
+      {showLogoutDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
+                האם אתה בטוח שברצונך להתנתק?
+              </h3>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogoutCancel}
+                  className="flex-1"
+                >
+                  ביטול
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleLogoutConfirm}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                >
+                  התנתק
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
