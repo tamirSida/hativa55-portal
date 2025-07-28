@@ -1,6 +1,6 @@
 import { User, IUser, UserStatus } from '@/models/User';
 import { BaseService } from './BaseService';
-import { where, orderBy, QueryConstraint } from 'firebase/firestore';
+import { where, orderBy, QueryConstraint, deleteField } from 'firebase/firestore';
 
 export class UserService extends BaseService<User> {
   constructor() {
@@ -96,9 +96,10 @@ export class UserService extends BaseService<User> {
   }
 
   public async removeProfilePicture(userId: string): Promise<void> {
-    await this.updateUserProfile(userId, {
-      profilePictureUrl: undefined,
-      profilePicturePublicId: undefined
+    await this.update(userId, {
+      profilePictureUrl: deleteField(),
+      profilePicturePublicId: deleteField(),
+      updatedAt: new Date()
     });
   }
 

@@ -35,13 +35,11 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cloudinaryService = new ClientCloudinaryService();
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     setIsUploading(true);
     setUploadError(null);
 
@@ -65,6 +63,12 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     }
   };
 
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
   const handleUploadClick = () => {
     if (disabled || isUploading) return;
     fileInputRef.current?.click();
@@ -76,10 +80,58 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     setUploadError(null);
   };
 
+  // Drag and drop handlers (desktop only)
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (disabled || isUploading) return;
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    
+    if (disabled || isUploading) return;
+
+    const files = Array.from(e.dataTransfer?.files || []);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
+    
+    if (imageFile) {
+      await processFile(imageFile);
+    }
+  };
+
+  // Check if device supports drag and drop (desktop)
+  const supportsDragDrop = typeof window !== 'undefined' && 
+    'draggable' in document.createElement('div') && 
+    !('ontouchstart' in window); // Exclude touch devices
+
   return (
     <div className={`flex flex-col items-center gap-3 ${className}`}>
       {/* Profile Picture Display */}
-      <div className={`relative ${SIZES[size]} rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100`}>
+      <div 
+        className={`relative ${SIZES[size]} rounded-full overflow-hidden border-2 transition-all duration-200 bg-gray-100 ${
+          isDragOver 
+            ? 'border-teal-400 border-dashed bg-teal-50' 
+            : 'border-gray-200'
+        } ${
+          !disabled 
+            ? 'cursor-pointer hover:border-teal-300' 
+            : ''
+        }`}
+        onClick={handleUploadClick}
+        onDragOver={supportsDragDrop ? handleDragOver : undefined}
+        onDragLeave={supportsDragDrop ? handleDragLeave : undefined}
+        onDrop={supportsDragDrop ? handleDrop : undefined}
+      >
         {currentImageUrl ? (
           <Image
             src={currentImageUrl}
@@ -101,11 +153,20 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
         {/* Upload Overlay */}
         {!disabled && (
           <div 
-            className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity duration-200"
+            className={`absolute inset-0 flex items-center justify-center cursor-pointer transition-all duration-200 ${
+              isDragOver 
+                ? 'bg-teal-500 bg-opacity-80 opacity-100' 
+                : 'bg-black bg-opacity-50 opacity-0 hover:opacity-100'
+            }`}
             onClick={handleUploadClick}
           >
             {isUploading ? (
               <FontAwesomeIcon icon={faSpinner} className="text-white text-lg animate-spin" />
+            ) : isDragOver ? (
+              <div className="text-center text-white">
+                <FontAwesomeIcon icon={faCamera} className="text-xl mb-1" />
+                <div className="text-xs font-medium">שחרר לכאן</div>
+              </div>
             ) : (
               <FontAwesomeIcon icon={faCamera} className="text-white text-lg" />
             )}
@@ -124,7 +185,7 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
             icon={isUploading ? faSpinner : faCamera}
             className={isUploading ? 'animate-spin' : ''}
           >
-            {currentImageUrl ? 'החלפת תמונה' : 'הוספת תמונה'}
+{currentImageUrl ? 'החלפת תמונה' : (supportsDragDrop ? 'הוספת תמונה או גרירה' : 'הוספת תמונה')}
           </Button>
           
           {currentImageUrl && (
