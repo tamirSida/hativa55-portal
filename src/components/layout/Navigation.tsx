@@ -189,9 +189,19 @@ export const Navigation: React.FC<NavigationProps> = ({
           {/* Mobile Auth Buttons - Left Side */}
           <div className="md:hidden flex items-center gap-2">
             {isAuthenticated ? (
-              <span className="text-xs text-gray-600 max-w-20 truncate">
-                {user?.name || firebaseUser?.displayName || firebaseUser?.email}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600 max-w-16 truncate">
+                  {user?.name || firebaseUser?.displayName || firebaseUser?.email}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  icon={faSignOutAlt}
+                  className="text-xs px-2 py-1"
+                  aria-label="התנתק"
+                />
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Link href="/login">
