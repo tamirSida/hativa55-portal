@@ -3,8 +3,9 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faUser, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCamera, faUser, faSpinner, faTrash, faEdit, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { Button } from './Button';
+import { ImageCropModal } from './ImageCropModal';
 import { ClientCloudinaryService } from '@/services/ClientCloudinaryService';
 import { CLOUDINARY_CONFIG } from '@/config/cloudinary';
 
@@ -36,6 +37,8 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cloudinaryService = new ClientCloudinaryService();
 
@@ -66,12 +69,46 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    await processFile(file);
+    
+    // Show crop modal instead of directly processing
+    setSelectedFile(file);
+    setShowCropModal(true);
   };
 
   const handleUploadClick = () => {
     if (disabled || isUploading) return;
     fileInputRef.current?.click();
+  };
+
+  const handleCropComplete = async (croppedFile: File) => {
+    setShowCropModal(false);
+    setSelectedFile(null);
+    await processFile(croppedFile);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropModal(false);
+    setSelectedFile(null);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleEditClick = () => {
+    if (disabled || isUploading || !currentImageUrl) return;
+    // Convert current image URL to file for editing
+    fetch(currentImageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'profile-picture.jpg', { type: blob.type });
+        setSelectedFile(file);
+        setShowCropModal(true);
+      })
+      .catch(error => {
+        console.error('Error loading image for editing:', error);
+        setUploadError('שגיאה בטעינת התמונה לעריכה');
+      });
   };
 
   const handleRemoveClick = () => {
@@ -105,7 +142,9 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     const imageFile = files.find(file => file.type.startsWith('image/'));
     
     if (imageFile) {
-      await processFile(imageFile);
+      // Show crop modal instead of directly processing
+      setSelectedFile(imageFile);
+      setShowCropModal(true);
     }
   };
 
@@ -176,7 +215,7 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
 
       {/* Action Buttons */}
       {!disabled && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-center">
           <Button
             variant="outline"
             size="sm"
@@ -185,20 +224,33 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
             icon={isUploading ? faSpinner : faCamera}
             className={isUploading ? 'animate-spin' : ''}
           >
-{currentImageUrl ? 'החלפת תמונה' : (supportsDragDrop ? 'הוספת תמונה או גרירה' : 'הוספת תמונה')}
+            {currentImageUrl ? 'החלפת תמונה' : (supportsDragDrop ? 'הוספת תמונה או גרירה' : 'הוספת תמונה')}
           </Button>
           
           {currentImageUrl && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRemoveClick}
-              disabled={isUploading}
-              icon={faTrash}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              הסרה
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleEditClick}
+                disabled={isUploading}
+                icon={faPencilAlt}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              >
+                עריכה
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveClick}
+                disabled={isUploading}
+                icon={faTrash}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                הסרה
+              </Button>
+            </>
           )}
         </div>
       )}
@@ -219,6 +271,16 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
         className="hidden"
         disabled={disabled || isUploading}
       />
+      
+      {/* Crop Modal */}
+      {showCropModal && selectedFile && (
+        <ImageCropModal
+          isOpen={showCropModal}
+          imageFile={selectedFile}
+          onCrop={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 };

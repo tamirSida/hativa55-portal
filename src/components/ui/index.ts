@@ -6,3 +6,4 @@ export * from './Modal';
 export * from './Tag';
 export * from './AutocompleteInput';
 export * from './ProfilePictureUpload';
+export * from './ImageCropModal';
