@@ -215,30 +215,41 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
 
       {/* Action Buttons */}
       {!disabled && (
-        <div className="flex gap-2 flex-wrap justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleUploadClick}
-            disabled={isUploading}
-            icon={isUploading ? faSpinner : faCamera}
-            className={isUploading ? 'animate-spin' : ''}
-          >
-            {currentImageUrl ? 'החלפת תמונה' : (supportsDragDrop ? 'הוספת תמונה או גרירה' : 'הוספת תמונה')}
-          </Button>
-          
-          {currentImageUrl && (
-            <>
+        <div className="flex gap-2 justify-center">
+          {!currentImageUrl ? (
+            // Upload button for new images
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              icon={isUploading ? faSpinner : faCamera}
+              className={isUploading ? 'animate-spin' : ''}
+            >
+              {supportsDragDrop ? 'הוספת תמונה או גרירה' : 'הוספת תמונה'}
+            </Button>
+          ) : (
+            // Edit controls for existing images
+            <div className="flex gap-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={handleEditClick}
                 disabled={isUploading}
                 icon={faPencilAlt}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              >
-                עריכה
-              </Button>
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border border-blue-200 hover:border-blue-300"
+                title="עריכת התמונה"
+              />
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleUploadClick}
+                disabled={isUploading}
+                icon={faCamera}
+                className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300"
+                title="החלפת תמונה"
+              />
               
               <Button
                 variant="ghost"
@@ -246,11 +257,10 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                 onClick={handleRemoveClick}
                 disabled={isUploading}
                 icon={faTrash}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                הסרה
-              </Button>
-            </>
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 hover:border-red-300"
+                title="הסרת התמונה"
+              />
+            </div>
           )}
         </div>
       )}
