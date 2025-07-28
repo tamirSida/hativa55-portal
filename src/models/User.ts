@@ -7,6 +7,8 @@ export interface IUser {
   city?: string;
   gdud?: string;
   bio?: string;
+  profilePictureUrl?: string;
+  profilePicturePublicId?: string;
   hobbyTags: string[];
   mentorTags: string[];
   businessId?: string;
@@ -46,6 +48,8 @@ export class User implements IUser {
   public city?: string;
   public gdud?: string;
   public bio?: string;
+  public profilePictureUrl?: string;
+  public profilePicturePublicId?: string;
   public hobbyTags: string[];
   public mentorTags: string[];
   public businessId?: string;
@@ -68,6 +72,8 @@ export class User implements IUser {
     this.city = data.city;
     this.gdud = data.gdud;
     this.bio = data.bio;
+    this.profilePictureUrl = data.profilePictureUrl;
+    this.profilePicturePublicId = data.profilePicturePublicId;
     this.hobbyTags = data.hobbyTags || [];
     this.mentorTags = data.mentorTags || [];
     this.businessId = data.businessId;
@@ -199,6 +205,22 @@ export class User implements IUser {
     return false; // Placeholder - will be overridden by context
   }
 
+  public updateProfilePicture(url?: string, publicId?: string): void {
+    this.profilePictureUrl = url;
+    this.profilePicturePublicId = publicId;
+    this.updatedAt = new Date();
+  }
+
+  public removeProfilePicture(): void {
+    this.profilePictureUrl = undefined;
+    this.profilePicturePublicId = undefined;
+    this.updatedAt = new Date();
+  }
+
+  public hasProfilePicture(): boolean {
+    return !!this.profilePictureUrl;
+  }
+
   public toFirestore(): Record<string, unknown> {
     const data: Record<string, unknown> = {
       email: this.email,
@@ -208,6 +230,8 @@ export class User implements IUser {
       city: this.city || '',
       gdud: this.gdud || '',
       bio: this.bio || '',
+      profilePictureUrl: this.profilePictureUrl || '',
+      profilePicturePublicId: this.profilePicturePublicId || '',
       hobbyTags: this.hobbyTags || [],
       mentorTags: this.mentorTags || [],
       businessId: this.businessId || '',

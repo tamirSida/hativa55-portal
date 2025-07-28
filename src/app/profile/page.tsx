@@ -17,13 +17,14 @@ import {
   faTrash,
   faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
-import { Card, Button } from '@/components/ui';
+import { Card, Button, ProfilePictureUpload } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { BusinessService } from '@/services/BusinessService';
+import { UserService } from '@/services/UserService';
 import { Business } from '@/models/Business';
 
 function ProfilePage() {
-  const { user, firebaseUser } = useAuth();
+  const { user, firebaseUser, refreshUserProfile } = useAuth();
   const [userBusinesses, setUserBusinesses] = useState<Business[]>([]);
   const [loadingBusinesses, setLoadingBusinesses] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
@@ -70,6 +71,32 @@ function ProfilePage() {
     }
   };
 
+  const handleProfilePictureUpload = async (url: string, publicId: string) => {
+    if (!user) return;
+    
+    try {
+      const userService = new UserService();
+      await userService.updateProfilePicture(user.id, url, publicId);
+      await refreshUserProfile(); // Refresh user data to show new picture
+    } catch (error) {
+      console.error('Failed to update profile picture:', error);
+      alert('שגיאה בעדכון תמונת הפרופיל. נסה שוב.');
+    }
+  };
+
+  const handleProfilePictureRemove = async () => {
+    if (!user) return;
+    
+    try {
+      const userService = new UserService();
+      await userService.removeProfilePicture(user.id);
+      await refreshUserProfile(); // Refresh user data to remove picture
+    } catch (error) {
+      console.error('Failed to remove profile picture:', error);
+      alert('שגיאה בהסרת תמונת הפרופיל. נסה שוב.');
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -86,8 +113,14 @@ function ProfilePage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FontAwesomeIcon icon={faUser} className="w-12 h-12 text-teal-600" />
+          <div className="mb-4">
+            <ProfilePictureUpload
+              currentImageUrl={user.profilePictureUrl}
+              currentImagePublicId={user.profilePicturePublicId}
+              onImageUpload={handleProfilePictureUpload}
+              onImageRemove={handleProfilePictureRemove}
+              size="large"
+            />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {user.name}

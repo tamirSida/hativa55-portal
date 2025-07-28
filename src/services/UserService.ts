@@ -74,7 +74,7 @@ export class UserService extends BaseService<User> {
 
   public async updateUserProfile(
     userId: string, 
-    updates: Partial<Pick<IUser, 'name' | 'bio' | 'businessId'>>
+    updates: Partial<Pick<IUser, 'name' | 'bio' | 'businessId' | 'profilePictureUrl' | 'profilePicturePublicId'>>
   ): Promise<void> {
     const updateData = {
       ...updates,
@@ -82,6 +82,24 @@ export class UserService extends BaseService<User> {
     };
     
     await this.update(userId, updateData);
+  }
+
+  public async updateProfilePicture(
+    userId: string,
+    profilePictureUrl: string,
+    profilePicturePublicId: string
+  ): Promise<void> {
+    await this.updateUserProfile(userId, {
+      profilePictureUrl,
+      profilePicturePublicId
+    });
+  }
+
+  public async removeProfilePicture(userId: string): Promise<void> {
+    await this.updateUserProfile(userId, {
+      profilePictureUrl: undefined,
+      profilePicturePublicId: undefined
+    });
   }
 
   public async addUserTag(

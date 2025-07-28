@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { withAuth } from '@/components/auth';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -15,7 +16,8 @@ import {
   faEnvelope,
   faMapMarkerAlt,
   faCalendarAlt,
-  faBookOpen
+  faBookOpen,
+  faUser
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui';
 import AutocompleteInput from '@/components/ui/AutocompleteInput';
@@ -464,16 +466,36 @@ function StudentsPage() {
               >
                 {/* Student Header */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-teal-100 p-2 rounded-full">
-                    <FontAwesomeIcon 
-                      icon={filters.connectionType === 'students' ? faGraduationCap : faUserGraduate} 
-                      className="w-5 h-5 text-teal-600" 
-                    />
+                  {/* Profile Picture */}
+                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-100 bg-gray-100 flex-shrink-0">
+                    {studentProfile.user.profilePictureUrl ? (
+                      <Image
+                        src={studentProfile.user.profilePictureUrl}
+                        alt={`תמונת פרופיל של ${studentProfile.user.name}`}
+                        width={48}
+                        height={48}
+                        className="object-cover w-full h-full"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-teal-100 flex items-center justify-center">
+                        <FontAwesomeIcon icon={faUser} className="w-6 h-6 text-teal-600" />
+                      </div>
+                    )}
                   </div>
+                  
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">
-                      {studentProfile.user.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {studentProfile.user.name}
+                      </h3>
+                      {/* Student/Alumni badge */}
+                      <div className="bg-teal-100 px-2 py-1 rounded-full flex items-center">
+                        <FontAwesomeIcon 
+                          icon={filters.connectionType === 'students' ? faGraduationCap : faUserGraduate} 
+                          className="w-3 h-3 text-teal-600" 
+                        />
+                      </div>
+                    </div>
                     {studentProfile.matchScore > 0 && (
                       <div className="text-xs text-teal-600 font-medium">
                         התאמה גבוהה
