@@ -69,13 +69,9 @@ function StudentsPage() {
           currentUser.educationIds.map(id => educationService.getById(id))
         );
 
-        // Find current in-progress degree education
+        // Find current in-progress education (be more inclusive)
         const currentEducation = userEducations.find(edu => 
-          edu && 
-          edu.status === EducationStatus.IN_PROGRESS &&
-          (edu.degreeOrCertificate.includes('תואר') || 
-           edu.degreeOrCertificate.includes('בוגר') ||
-           edu.degreeOrCertificate.includes('מוסמך'))
+          edu && edu.status === EducationStatus.IN_PROGRESS
         );
 
         if (currentEducation) {
@@ -114,17 +110,40 @@ function StudentsPage() {
             user.educationIds.map(id => educationService.getById(id))
           );
           
-          // Filter for degree educations only (bachelor/master)
-          const degreeEducations = userEducations.filter(edu => 
-            edu && (
-              edu.degreeOrCertificate.includes('תואר') || 
-              edu.degreeOrCertificate.includes('בוגר') ||
-              edu.degreeOrCertificate.includes('מוסמך') ||
-              edu.degreeOrCertificate.includes('Bachelor') ||
-              edu.degreeOrCertificate.includes('Master') ||
-              edu.degreeOrCertificate.includes('MBA')
-            )
-          );
+          // Filter for degree educations only (bachelor/master) - be more inclusive
+          const degreeEducations = userEducations.filter(edu => {
+            if (!edu) return false;
+            
+            const degree = edu.degreeOrCertificate.toLowerCase();
+            
+            // Always include standard degree keywords
+            const standardDegreeKeywords = [
+              'תואר', 'בוגר', 'מוסמך', 'bachelor', 'master', 'mba',
+              'b.a', 'b.sc', 'm.a', 'm.sc', 'phd', 'דוקטור'
+            ];
+            
+            const hasStandardKeyword = standardDegreeKeywords.some(keyword => 
+              degree.includes(keyword.toLowerCase())
+            );
+            
+            if (hasStandardKeyword) {
+              return true;
+            }
+            
+            // For everything else, be very selective about what to exclude
+            // Only exclude obvious short courses/certificates
+            const excludeKeywords = [
+              'קורס קצר', 'סדנה', 'הכשרה קצרה', 'short course', 'workshop'
+            ];
+            
+            const shouldExclude = excludeKeywords.some(keyword => 
+              degree.includes(keyword.toLowerCase())
+            );
+            
+            // Include everything that's not obviously a short course
+            // This includes custom degrees, certificates, and professional programs
+            return !shouldExclude;
+          });
           
           for (const education of degreeEducations) {
             if (!education) continue;
@@ -263,22 +282,37 @@ function StudentsPage() {
 
   // Check if degrees are similar (same field)
   const isSimilarDegree = (degree1: string, degree2: string): boolean => {
-    const techFields = ['מדעי המחשב', 'הנדסת תוכנה', 'מערכות מידע', 'Computer Science', 'Software Engineering'];
-    const businessFields = ['כלכלה', 'ניהול', 'חשבונאות', 'Economics', 'Business', 'MBA'];
-    const engineeringFields = ['הנדסה', 'Engineering'];
+    const d1Lower = degree1.toLowerCase();
+    const d2Lower = degree2.toLowerCase();
     
-    const isDegree1Tech = techFields.some(field => degree1.includes(field));
-    const isDegree2Tech = techFields.some(field => degree2.includes(field));
+    const techFields = ['מדעי המחשב', 'הנדסת תוכנה', 'מערכות מידע', 'computer science', 'software engineering', 'מחשבים', 'תוכנה'];
+    const businessFields = ['כלכלה', 'ניהול', 'חשבונאות', 'economics', 'business', 'mba', 'עסקים', 'כלכלי'];
+    const engineeringFields = ['הנדסה', 'engineering', 'הנדסי'];
+    const lawFields = ['משפטים', 'law', 'משפט'];
+    const medicineFields = ['רפואה', 'medicine', 'רפואי'];
+    const psychologyFields = ['פסיכולוגיה', 'psychology'];
+    const educationFields = ['חינוך', 'education', 'הוראה'];
     
-    const isDegree1Business = businessFields.some(field => degree1.includes(field));
-    const isDegree2Business = businessFields.some(field => degree2.includes(field));
+    const allFields = [
+      { name: 'tech', keywords: techFields },
+      { name: 'business', keywords: businessFields },
+      { name: 'engineering', keywords: engineeringFields },
+      { name: 'law', keywords: lawFields },
+      { name: 'medicine', keywords: medicineFields },
+      { name: 'psychology', keywords: psychologyFields },
+      { name: 'education', keywords: educationFields }
+    ];
     
-    const isDegree1Engineering = engineeringFields.some(field => degree1.includes(field));
-    const isDegree2Engineering = engineeringFields.some(field => degree2.includes(field));
+    for (const field of allFields) {
+      const isDegree1InField = field.keywords.some(keyword => d1Lower.includes(keyword));
+      const isDegree2InField = field.keywords.some(keyword => d2Lower.includes(keyword));
+      
+      if (isDegree1InField && isDegree2InField) {
+        return true;
+      }
+    }
     
-    return (isDegree1Tech && isDegree2Tech) || 
-           (isDegree1Business && isDegree2Business) ||
-           (isDegree1Engineering && isDegree2Engineering);
+    return false;
   };
 
   // Filter and sort students
