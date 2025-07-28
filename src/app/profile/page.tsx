@@ -34,6 +34,9 @@ function ProfilePage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [userEducation, setUserEducation] = useState<Education[]>([]);
   const [loadingEducation, setLoadingEducation] = useState(false);
+  const [selectedEducation, setSelectedEducation] = useState<Education | null>(null);
+  const [showDeleteEducationModal, setShowDeleteEducationModal] = useState(false);
+  const [isDeletingEducation, setIsDeletingEducation] = useState(false);
 
   useEffect(() => {
     const loadUserBusinesses = async () => {
@@ -99,6 +102,37 @@ function ProfilePage() {
       alert('שגיאה במחיקת העסק. נסה שוב.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteEducation = async () => {
+    if (!selectedEducation || !user) return;
+
+    setIsDeletingEducation(true);
+    try {
+      const educationService = new EducationService();
+      await educationService.deleteEducation(selectedEducation.id);
+      
+      // Update user education IDs
+      const userService = new UserService();
+      const updatedEducationIds = user.educationIds.filter(id => id !== selectedEducation.id);
+      await userService.update(user.id, { 
+        educationIds: updatedEducationIds,
+        updatedAt: new Date() 
+      });
+      
+      // Remove from local state
+      setUserEducation(userEducation.filter(e => e.id !== selectedEducation.id));
+      setShowDeleteEducationModal(false);
+      setSelectedEducation(null);
+      
+      // Refresh user profile to update education count
+      await refreshUserProfile();
+    } catch (error) {
+      console.error('Failed to delete education:', error);
+      alert('שגיאה במחיקת ההשכלה. נסה שוב.');
+    } finally {
+      setIsDeletingEducation(false);
     }
   };
 
@@ -423,7 +457,7 @@ function ProfilePage() {
                 <Link href="/profile/education">
                   <Button variant="outline" size="sm">
                     <FontAwesomeIcon icon={faGraduationCap} className="w-4 h-4 ml-2" />
-                    עדכן השכלה
+                    הוסף השכלה
                   </Button>
                 </Link>
               </div>
@@ -463,7 +497,7 @@ function ProfilePage() {
                               )}
                             </div>
                             
-                            {/* Action Button */}
+                            {/* Action Buttons */}
                             <div className="flex gap-2 ml-4">
                               <Link href="/profile/education">
                                 <Button variant="outline" size="sm">
@@ -471,6 +505,18 @@ function ProfilePage() {
                                   עריכה
                                 </Button>
                               </Link>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedEducation(education);
+                                  setShowDeleteEducationModal(true);
+                                }}
+                                className="text-red-600 hover:text-red-700 hover:border-red-300"
+                              >
+                                <FontAwesomeIcon icon={faTrash} className="w-4 h-4 ml-1" />
+                                מחק
+                              </Button>
                             </div>
                           </div>
                           
@@ -484,7 +530,7 @@ function ProfilePage() {
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}>
                               {education.status === 'completed' ? 'הושלם' : 
-                               education.status === 'in_progress' ? 'בתהליך' : 'מתוכנן'}
+                               education.status === 'in_progress' ? 'סטודנט' : 'מתוכנן'}
                             </span>
                             
                             <div className="text-xs text-gray-500">
@@ -641,6 +687,51 @@ function ProfilePage() {
                 className="bg-red-600 hover:bg-red-700"
               >
                 {isDeleting ? 'מוחק...' : 'מחק'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Education Confirmation Modal */}
+      {showDeleteEducationModal && selectedEducation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <FontAwesomeIcon icon={faExclamationTriangle} className="w-6 h-6 text-red-600" />
+              <h3 className="text-lg font-semibold text-gray-900">אישור מחיקה</h3>
+            </div>
+            
+            <div className="mb-6">
+              <p className="text-gray-700 mb-2">
+                האם אתה בטוח שברצונך למחוק את רישום ההשכלה:
+              </p>
+              <p className="font-semibold text-gray-900">
+                "{selectedEducation.institutionName} - {selectedEducation.degreeOrCertificate}"
+              </p>
+              <p className="text-sm text-red-600 mt-2">
+                פעולה זו לא ניתנת לביטול!
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteEducationModal(false);
+                  setSelectedEducation(null);
+                }}
+                disabled={isDeletingEducation}
+              >
+                ביטול
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleDeleteEducation}
+                loading={isDeletingEducation}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeletingEducation ? 'מוחק...' : 'מחק'}
               </Button>
             </div>
           </div>

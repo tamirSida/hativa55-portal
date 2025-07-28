@@ -106,6 +106,10 @@ export class EducationService extends BaseService<Education> {
     }
   }
 
+  public async deleteEducation(educationId: string): Promise<void> {
+    await this.delete(educationId);
+  }
+
   public async deleteEducationsForUser(userId: string): Promise<void> {
     const userEducation = await this.getEducationByUser(userId);
     
