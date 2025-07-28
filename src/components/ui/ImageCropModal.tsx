@@ -246,7 +246,7 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
         <div className="p-6">
           <div 
             ref={containerRef}
-            className="relative mx-auto mb-4 select-none"
+            className="relative mx-auto mb-6 select-none"
             style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
           >
             <canvas
@@ -259,14 +259,14 @@ export const ImageCropModal: React.FC<ImageCropModalProps> = ({
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             />
-            
-            {/* Instructions */}
-            <div className="text-center text-sm text-gray-500 mt-2">
-              {typeof window !== 'undefined' && 'ontouchstart' in window 
-                ? 'גע וגרור להזזה • השתמש בכפתורים לזום'
-                : 'גרור להזזה • השתמש בכפתורים לזום'
-              }
-            </div>
+          </div>
+          
+          {/* Instructions */}
+          <div className="text-center text-sm text-gray-500 mb-4">
+            {typeof window !== 'undefined' && 'ontouchstart' in window 
+              ? 'גע וגרור להזזה • השתמש בכפתורים לזום'
+              : 'גרור להזזה • השתמש בכפתורים לזום'
+            }
           </div>
 
           {/* Controls */}
