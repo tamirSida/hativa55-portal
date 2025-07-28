@@ -21,7 +21,9 @@ import { Card, Button, ProfilePictureUpload } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { BusinessService } from '@/services/BusinessService';
 import { UserService } from '@/services/UserService';
+import { EducationService } from '@/services/EducationService';
 import { Business } from '@/models/Business';
+import { Education } from '@/models/Education';
 
 function ProfilePage() {
   const { user, firebaseUser, refreshUserProfile } = useAuth();
@@ -30,6 +32,8 @@ function ProfilePage() {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [userEducation, setUserEducation] = useState<Education[]>([]);
+  const [loadingEducation, setLoadingEducation] = useState(false);
 
   useEffect(() => {
     const loadUserBusinesses = async () => {
@@ -50,6 +54,33 @@ function ProfilePage() {
 
     loadUserBusinesses();
   }, [firebaseUser]);
+
+  useEffect(() => {
+    const loadUserEducation = async () => {
+      if (!user?.educationIds?.length) {
+        setUserEducation([]);
+        return;
+      }
+      
+      setLoadingEducation(true);
+      try {
+        const educationService = new EducationService();
+        const educationPromises = user.educationIds.map(id => educationService.getById(id));
+        const educationRecords = await Promise.all(educationPromises);
+        // Filter out null results and sort by most recent
+        const validEducation = educationRecords
+          .filter((edu): edu is Education => edu !== null)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setUserEducation(validEducation);
+      } catch (error) {
+        console.error('Error loading user education:', error);
+      } finally {
+        setLoadingEducation(false);
+      }
+    };
+
+    loadUserEducation();
+  }, [user?.educationIds]);
 
   const handleDeleteBusiness = async () => {
     if (!selectedBusiness) return;
@@ -377,6 +408,111 @@ function ProfilePage() {
                     <Button variant="primary">
                       <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 ml-2" />
                       הוסף עסק
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </Card>
+
+            {/* My Education */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  השכלה שלי
+                </h2>
+                <Link href="/profile/education">
+                  <Button variant="outline" size="sm">
+                    <FontAwesomeIcon icon={faGraduationCap} className="w-4 h-4 ml-2" />
+                    עדכן השכלה
+                  </Button>
+                </Link>
+              </div>
+
+              {loadingEducation ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
+                  <p className="text-gray-600">טוען השכלה...</p>
+                </div>
+              ) : userEducation.length > 0 ? (
+                <div className="space-y-4">
+                  {userEducation.map((education) => (
+                    <div 
+                      key={education.id} 
+                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        {/* Education Icon */}
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <FontAwesomeIcon icon={faGraduationCap} className="w-6 h-6 text-blue-600" />
+                        </div>
+                        
+                        {/* Education Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold text-gray-900 mb-1">
+                                {education.institutionName}
+                              </h3>
+                              <p className="text-sm text-blue-600 mb-2">
+                                {education.degreeOrCertificate}
+                              </p>
+                              {education.fieldOfStudy && (
+                                <p className="text-sm text-gray-600 mb-1">
+                                  {education.fieldOfStudy}
+                                </p>
+                              )}
+                            </div>
+                            
+                            {/* Action Button */}
+                            <div className="flex gap-2 ml-4">
+                              <Link href="/profile/education">
+                                <Button variant="outline" size="sm">
+                                  <FontAwesomeIcon icon={faEdit} className="w-4 h-4 ml-1" />
+                                  עריכה
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                          
+                          {/* Education Status and Years */}
+                          <div className="mt-3 flex items-center gap-4">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              education.status === 'completed' 
+                                ? 'bg-green-100 text-green-800' 
+                                : education.status === 'in_progress'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {education.status === 'completed' ? 'הושלם' : 
+                               education.status === 'in_progress' ? 'בתהליך' : 'מתוכנן'}
+                            </span>
+                            
+                            <div className="text-xs text-gray-500">
+                              {education.startYear && education.endYear 
+                                ? `${education.startYear} - ${education.endYear}`
+                                : education.startYear 
+                                ? `החל מ-${education.startYear}`
+                                : ''}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <FontAwesomeIcon icon={faGraduationCap} className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    אין לך רישומי השכלה
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    הוסף את רישומי ההשכלה שלך לקהילה
+                  </p>
+                  <Link href="/profile/education">
+                    <Button variant="primary">
+                      <FontAwesomeIcon icon={faGraduationCap} className="w-4 h-4 ml-2" />
+                      הוסף השכלה
                     </Button>
                   </Link>
                 </div>
