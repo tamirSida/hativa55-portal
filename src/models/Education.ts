@@ -1,3 +1,6 @@
+import educationOptions from '@/config/educationOptions.json';
+import type { EducationOptions } from '@/config/types';
+
 export interface IEducation {
   id: string;
   userId: string;
@@ -118,74 +121,22 @@ export class Education implements IEducation {
 }
 
 export class EducationManager {
-  private static commonInstitutions: string[] = [
-    'אוניברסיטת תל אביב',
-    'האוניברסיטה העברית',
-    'טכניון',
-    'אוניברסיטת בר אילן',
-    'אוניברסיטת בן גוריון',
-    'אוניברסיטת חיפה',
-    'אוניברסיטת אריאל',
-    'רייכמן (IDC)',
-    'המכללה האקדמית תל אביב',
-    'המכון הטכנולוגי חולון',
-    'מכון עזריאלי',
-    'מכללת ספיר',
-    'בצלאל',
-    'שנקר',
-    'John Bryce',
-    'Coursera',
-    'Udemy',
-    'יחידת תלפיות',
-    'ממ״ן',
-    'בית ספר לטכנולוגיה על שם אפקה'
-  ];
-
-  private static commonDegrees: string[] = [
-    'תואר ראשון במדעי המחשב',
-    'תואר ראשון בהנדסת תוכנה',
-    'תואר ראשון בכלכלה',
-    'תואר ראשון בניהול',
-    'תואר ראשון בפסיכולוגיה',
-    'תואר ראשון בחינוך',
-    'תואר ראשון במשפטים',
-    'תואר ראשון ברפואה',
-    'תואר שני במנהל עסקים (MBA)',
-    'תואר שני במדעי המחשב',
-    'תואר שלישי (דוקטורט)',
-    'קורס פיתוח Full Stack',
-    'קורס Data Science',
-    'קורס UX/UI',
-    'קורס Digital Marketing',
-    'קורס Project Management',
-    'הסמכת PMP',
-    'הסמכת AWS',
-    'הסמכת Google Analytics',
-    'קורס חשבונאות'
-  ];
-
-  private static uniJobs: string[] = [
-    'יו״ר אגודת סטודנטים',
-    'מתרגל',
-    'מחקר',
-    'עוזר הוראה',
-    'חבר מועצה',
-    'מנהיג סטודנטיאלי',
-    'חבר ועדה אקדמית',
-    'מתנדב באירועים',
-    'עיתונאי בעיתון סטודנטים'
-  ];
+  private static options: EducationOptions = educationOptions;
 
   public static getCommonInstitutions(): string[] {
-    return this.commonInstitutions;
+    return [...this.options.institutions].sort((a, b) => a.localeCompare(b, 'he'));
   }
 
   public static getCommonDegrees(): string[] {
-    return this.commonDegrees;
+    return [...this.options.degrees].sort((a, b) => a.localeCompare(b, 'he'));
   }
 
   public static getUniJobs(): string[] {
-    return this.uniJobs;
+    return [...this.options.universityJobs].sort((a, b) => a.localeCompare(b, 'he'));
+  }
+
+  public static getAllOptions(): EducationOptions {
+    return this.options;
   }
 
   public static isValidYear(year: number): boolean {
